@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+frontend/dist/
+backend/target/
+
+# Runtime uploads
+backend/src/main/resources/static/uploads/*
+!backend/src/main/resources/static/uploads/.gitkeep
+
+# Logs and caches
+*.log
+.DS_Store
+Thumbs.db
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# IDE metadata
+.idea/
