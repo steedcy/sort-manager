@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Package, MapPin, Tag, ChevronRight, Box, Sun, Moon } from 'lucide-react'
-import { useThemeContext } from '../App'
+import { useThemeContext } from '../context/ThemeContext'
 
 const navItems = [
   { label: '仪表盘',  path: '/',           icon: LayoutDashboard },
@@ -11,7 +11,7 @@ const navItems = [
 
 export default function Sidebar() {
   const location = useLocation()
-  const { theme, toggle, isDark } = useThemeContext()
+  const { toggle, isDark } = useThemeContext()
 
   return (
     <aside className="sidebar">

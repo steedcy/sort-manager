@@ -21,7 +21,22 @@ export default function Categories() {
     try { const res = await categoryApi.getAll(); setCategories(res.data || []) }
     finally { setLoading(false) }
   }
-  useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadInitial() {
+      try {
+        const res = await categoryApi.getAll()
+        if (!cancelled) setCategories(res.data || [])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadInitial()
+    return () => { cancelled = true }
+  }, [])
 
   const openCreate = () => { setEditing(null); setForm(initialForm); setShowModal(true) }
   const openEdit = (cat) => {

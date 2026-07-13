@@ -46,7 +46,31 @@ export default function Items() {
     } finally { setLoading(false) }
   }, [keyword, filterCategory, filterLocation])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadInitial() {
+      try {
+        const params = {}
+        if (keyword) params.keyword = keyword
+        if (filterCategory) params.categoryId = filterCategory
+        if (filterLocation) params.locationId = filterLocation
+        const [ir, cr, lr] = await Promise.all([
+          itemApi.getAll(params), categoryApi.getAll(), locationApi.getAll(),
+        ])
+        if (!cancelled) {
+          setItems(ir.data || [])
+          setCategories(cr.data || [])
+          setLocations(buildLocationTreeOptions(lr.data || []))
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadInitial()
+    return () => { cancelled = true }
+  }, [keyword, filterCategory, filterLocation])
 
   const openCreate = () => { setEditing(null); setForm(initialForm); setShowModal(true) }
   const openEdit = (item) => {
