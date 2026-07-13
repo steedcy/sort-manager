@@ -20,5 +20,8 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Local development worktrees
+.worktrees/
+
 # IDE metadata
 .idea/
