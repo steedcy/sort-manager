@@ -16,7 +16,7 @@ export default function ImageUpload({ value, onChange }) {
       const res = await uploadApi.upload(file)
       onChange(res.data.url)
       toast.success('图片上传成功')
-    } catch (e) {
+    } catch {
       // handled by interceptor
     } finally {
       setUploading(false)

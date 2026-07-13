@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,12 +29,17 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public CategoryDTO findById(Long id) {
         Category c = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("分类不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Category not found: " + id));
         return toDTO(c);
     }
 
     @Transactional
     public CategoryDTO create(CategoryDTO dto) {
+        validateName(dto.getName());
+        if (categoryRepository.existsByName(dto.getName())) {
+            throw new IllegalArgumentException("Category name already exists: " + dto.getName());
+        }
+
         Category c = new Category();
         c.setName(dto.getName());
         c.setIcon(dto.getIcon());
@@ -44,7 +50,14 @@ public class CategoryService {
     @Transactional
     public CategoryDTO update(Long id, CategoryDTO dto) {
         Category c = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("分类不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Category not found: " + id));
+        validateName(dto.getName());
+        categoryRepository.findByName(dto.getName())
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("Category name already exists: " + dto.getName());
+                });
+
         c.setName(dto.getName());
         c.setIcon(dto.getIcon());
         c.setColor(dto.getColor());
@@ -54,6 +67,12 @@ public class CategoryService {
     @Transactional
     public void delete(Long id) {
         categoryRepository.deleteById(id);
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Category name is required");
+        }
     }
 
     private CategoryDTO toDTO(Category c) {

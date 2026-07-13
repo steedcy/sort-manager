@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +38,7 @@ public class LocationService {
     @Transactional(readOnly = true)
     public LocationDTO findById(Long id) {
         Location l = locationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("位置不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Location not found: " + id));
         return toDTO(l, true);
     }
 
@@ -48,7 +49,9 @@ public class LocationService {
         l.setDescription(dto.getDescription());
         l.setImageUrl(dto.getImageUrl());
         if (dto.getParentId() != null) {
-            locationRepository.findById(dto.getParentId()).ifPresent(l::setParent);
+            Location parent = locationRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Parent location not found: " + dto.getParentId()));
+            l.setParent(parent);
         }
         return toDTO(locationRepository.save(l), false);
     }
@@ -56,12 +59,18 @@ public class LocationService {
     @Transactional
     public LocationDTO update(Long id, LocationDTO dto) {
         Location l = locationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("位置不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Location not found: " + id));
         l.setName(dto.getName());
         l.setDescription(dto.getDescription());
         l.setImageUrl(dto.getImageUrl());
         if (dto.getParentId() != null) {
-            locationRepository.findById(dto.getParentId()).ifPresent(l::setParent);
+            if (dto.getParentId().equals(id)) {
+                throw new IllegalArgumentException("Location cannot be its own parent");
+            }
+            Location parent = locationRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Parent location not found: " + dto.getParentId()));
+            ensureNotDescendant(id, parent);
+            l.setParent(parent);
         } else {
             l.setParent(null);
         }
@@ -71,6 +80,16 @@ public class LocationService {
     @Transactional
     public void delete(Long id) {
         locationRepository.deleteById(id);
+    }
+
+    private void ensureNotDescendant(Long locationId, Location proposedParent) {
+        Location cursor = proposedParent;
+        while (cursor != null) {
+            if (locationId.equals(cursor.getId())) {
+                throw new IllegalArgumentException("Location cannot be moved under its descendant");
+            }
+            cursor = cursor.getParent();
+        }
     }
 
     private LocationDTO toDTO(Location l, boolean includeChildren) {

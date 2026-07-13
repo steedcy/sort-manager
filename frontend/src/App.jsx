@@ -1,16 +1,13 @@
-import { createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useTheme } from './hooks/useTheme'
+import { ThemeContext } from './context/ThemeContext'
 import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
 import Dashboard from './pages/Dashboard'
 import Items from './pages/Items'
 import Locations from './pages/Locations'
 import Categories from './pages/Categories'
-
-export const ThemeContext = createContext({ theme: 'dark', toggle: () => {}, isDark: true })
-export const useThemeContext = () => useContext(ThemeContext)
 
 export default function App() {
   const themeState = useTheme()

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { dashboardApi } from '../api'
-import { Package, MapPin, Tag, AlertCircle, TrendingUp, Clock, DollarSign, CalendarOff } from 'lucide-react'
+import { Package, MapPin, Tag, TrendingUp, Clock, DollarSign, CalendarOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const StatCard = ({ icon: Icon, label, value, color, bgColor, onClick }) => (

@@ -3,6 +3,7 @@ package com.sort.manager.controller;
 import com.sort.manager.dto.ApiResponse;
 import com.sort.manager.dto.CategoryDTO;
 import com.sort.manager.service.CategoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,12 +27,12 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ApiResponse<CategoryDTO> create(@RequestBody CategoryDTO dto) {
+    public ApiResponse<CategoryDTO> create(@Valid @RequestBody CategoryDTO dto) {
         return ApiResponse.ok("分类创建成功", categoryService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<CategoryDTO> update(@PathVariable Long id, @RequestBody CategoryDTO dto) {
+    public ApiResponse<CategoryDTO> update(@PathVariable Long id, @Valid @RequestBody CategoryDTO dto) {
         return ApiResponse.ok("分类更新成功", categoryService.update(id, dto));
     }
 

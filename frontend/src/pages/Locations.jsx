@@ -72,7 +72,25 @@ export default function Locations() {
       setAll(buildLocationTreeOptions(ar.data || []))
     } finally { setLoading(false) }
   }
-  useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadInitial() {
+      try {
+        const [tr, ar] = await Promise.all([locationApi.getTree(), locationApi.getAll()])
+        if (!cancelled) {
+          setTree(tr.data || [])
+          setAll(buildLocationTreeOptions(ar.data || []))
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadInitial()
+    return () => { cancelled = true }
+  }, [])
 
   const openCreate = () => { setEditing(null); setForm(initialForm); setShowModal(true) }
   const openEdit = (loc) => {
