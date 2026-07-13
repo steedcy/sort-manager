@@ -3,6 +3,7 @@ package com.sort.manager.controller;
 import com.sort.manager.dto.ApiResponse;
 import com.sort.manager.dto.ItemDTO;
 import com.sort.manager.service.ItemService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,12 +31,12 @@ public class ItemController {
     }
 
     @PostMapping
-    public ApiResponse<ItemDTO> create(@RequestBody ItemDTO dto) {
+    public ApiResponse<ItemDTO> create(@Valid @RequestBody ItemDTO dto) {
         return ApiResponse.ok("物品添加成功", itemService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<ItemDTO> update(@PathVariable Long id, @RequestBody ItemDTO dto) {
+    public ApiResponse<ItemDTO> update(@PathVariable Long id, @Valid @RequestBody ItemDTO dto) {
         return ApiResponse.ok("物品更新成功", itemService.update(id, dto));
     }
 

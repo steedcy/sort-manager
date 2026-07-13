@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +37,7 @@ public class ItemService {
     @Transactional(readOnly = true)
     public ItemDTO findById(Long id) {
         Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("物品不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         return toDTO(item);
     }
 
@@ -50,7 +51,7 @@ public class ItemService {
     @Transactional
     public ItemDTO update(Long id, ItemDTO dto) {
         Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("物品不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         fillItem(item, dto);
         return toDTO(itemRepository.save(item));
     }
@@ -58,9 +59,11 @@ public class ItemService {
     @Transactional
     public ItemDTO move(Long id, Long locationId) {
         Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("物品不存在: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         if (locationId != null) {
-            locationRepository.findById(locationId).ifPresent(item::setLocation);
+            Location location = locationRepository.findById(locationId)
+                    .orElseThrow(() -> new IllegalArgumentException("Location not found: " + locationId));
+            item.setLocation(location);
         } else {
             item.setLocation(null);
         }
@@ -79,11 +82,12 @@ public class ItemService {
     }
 
     private void fillItem(Item item, ItemDTO dto) {
+        validateItem(dto);
         item.setName(dto.getName());
         item.setDescription(dto.getDescription());
         item.setQuantity(dto.getQuantity() != null ? dto.getQuantity() : 1);
         item.setPrice(dto.getPrice() != null ? dto.getPrice() : BigDecimal.ZERO);
-        
+
         if (dto.getPurchaseDate() != null && !dto.getPurchaseDate().isEmpty()) {
             try {
                 item.setPurchaseDate(LocalDate.parse(dto.getPurchaseDate(), DateTimeFormatter.ISO_DATE));
@@ -106,14 +110,30 @@ public class ItemService {
 
         item.setImageUrl(dto.getImageUrl());
         if (dto.getCategoryId() != null) {
-            categoryRepository.findById(dto.getCategoryId()).ifPresent(item::setCategory);
+            Category category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("Category not found: " + dto.getCategoryId()));
+            item.setCategory(category);
         } else {
             item.setCategory(null);
         }
         if (dto.getLocationId() != null) {
-            locationRepository.findById(dto.getLocationId()).ifPresent(item::setLocation);
+            Location location = locationRepository.findById(dto.getLocationId())
+                    .orElseThrow(() -> new IllegalArgumentException("Location not found: " + dto.getLocationId()));
+            item.setLocation(location);
         } else {
             item.setLocation(null);
+        }
+    }
+
+    private void validateItem(ItemDTO dto) {
+        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Item name is required");
+        }
+        if (dto.getQuantity() != null && dto.getQuantity() < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1");
+        }
+        if (dto.getPrice() != null && dto.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
         }
     }
 
@@ -124,7 +144,7 @@ public class ItemService {
         dto.setDescription(item.getDescription());
         dto.setQuantity(item.getQuantity());
         dto.setPrice(item.getPrice());
-        
+
         if (item.getPrice() != null && item.getQuantity() != null) {
             dto.setTotalPrice(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         } else {
@@ -134,16 +154,16 @@ public class ItemService {
         if (item.getPurchaseDate() != null) {
             dto.setPurchaseDate(item.getPurchaseDate().toString());
         }
-        
+
         if (item.getExpiryDate() != null) {
             dto.setExpiryDate(item.getExpiryDate().toString());
             if (item.getExpiryDate().isBefore(LocalDate.now())) {
-                dto.setStatus("过期");
+                dto.setStatus("\u8fc7\u671f");
             } else {
-                dto.setStatus("正常");
+                dto.setStatus("\u6b63\u5e38");
             }
         } else {
-            dto.setStatus("正常");
+            dto.setStatus("\u6b63\u5e38");
         }
 
         dto.setImageUrl(item.getImageUrl());

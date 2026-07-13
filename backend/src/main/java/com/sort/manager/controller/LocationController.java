@@ -3,6 +3,7 @@ package com.sort.manager.controller;
 import com.sort.manager.dto.ApiResponse;
 import com.sort.manager.dto.LocationDTO;
 import com.sort.manager.service.LocationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,12 +32,12 @@ public class LocationController {
     }
 
     @PostMapping
-    public ApiResponse<LocationDTO> create(@RequestBody LocationDTO dto) {
+    public ApiResponse<LocationDTO> create(@Valid @RequestBody LocationDTO dto) {
         return ApiResponse.ok("位置创建成功", locationService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<LocationDTO> update(@PathVariable Long id, @RequestBody LocationDTO dto) {
+    public ApiResponse<LocationDTO> update(@PathVariable Long id, @Valid @RequestBody LocationDTO dto) {
         return ApiResponse.ok("位置更新成功", locationService.update(id, dto));
     }
 
