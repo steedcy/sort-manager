@@ -1,6 +1,7 @@
 package com.sort.manager.service;
 
 import com.sort.manager.dto.ItemDTO;
+import com.sort.manager.dto.PageResponse;
 import com.sort.manager.entity.Category;
 import com.sort.manager.entity.Item;
 import com.sort.manager.entity.Location;
@@ -8,7 +9,9 @@ import com.sort.manager.repository.CategoryRepository;
 import com.sort.manager.repository.ItemRepository;
 import com.sort.manager.repository.LocationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +21,25 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ItemService {
+
+    private static final int DEFAULT_PAGE_SIZE = 12;
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt",
+            "updatedAt",
+            "name",
+            "quantity",
+            "price",
+            "purchaseDate",
+            "expiryDate"
+    );
+    private static final Set<String> ALLOWED_STATUSES = Set.of("normal", "expired", "expiring");
 
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
@@ -32,6 +49,39 @@ public class ItemService {
     public List<ItemDTO> findAll(String keyword, Long categoryId, Long locationId) {
         List<Item> items = itemRepository.findByFilters(keyword, categoryId, locationId);
         return items.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ItemDTO> search(String keyword,
+                                        Long categoryId,
+                                        Long locationId,
+                                        String status,
+                                        Integer page,
+                                        Integer size,
+                                        String sort,
+                                        String direction) {
+        int pageNumber = page != null && page >= 0 ? page : 0;
+        int pageSize = normalizeSize(size);
+        String sortField = sort != null && ALLOWED_SORT_FIELDS.contains(sort) ? sort : "createdAt";
+        Sort.Direction sortDirection = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String normalizedKeyword = normalizeKeyword(keyword);
+        String normalizedStatus = normalizeStatus(status);
+        LocalDate today = LocalDate.now();
+
+        Page<Item> result = itemRepository.searchByFilters(
+                normalizedKeyword,
+                categoryId,
+                locationId,
+                normalizedStatus,
+                today,
+                today.plusDays(30),
+                PageRequest.of(pageNumber, pageSize, Sort.by(sortDirection, sortField))
+        );
+
+        List<ItemDTO> content = result.getContent().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+        return PageResponse.from(result, content);
     }
 
     @Transactional(readOnly = true)
@@ -137,6 +187,34 @@ public class ItemService {
         }
     }
 
+    private int normalizeSize(Integer size) {
+        if (size == null) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        if (size < 1) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(size, MAX_PAGE_SIZE);
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+        return keyword.trim();
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            return null;
+        }
+        String normalized = status.trim().toLowerCase();
+        if (!ALLOWED_STATUSES.contains(normalized)) {
+            throw new IllegalArgumentException("Unsupported item status filter: " + status);
+        }
+        return normalized;
+    }
+
     private ItemDTO toDTO(Item item) {
         ItemDTO dto = new ItemDTO();
         dto.setId(item.getId());
@@ -159,6 +237,8 @@ public class ItemService {
             dto.setExpiryDate(item.getExpiryDate().toString());
             if (item.getExpiryDate().isBefore(LocalDate.now())) {
                 dto.setStatus("\u8fc7\u671f");
+            } else if (!item.getExpiryDate().isAfter(LocalDate.now().plusDays(30))) {
+                dto.setStatus("\u4e34\u671f");
             } else {
                 dto.setStatus("\u6b63\u5e38");
             }

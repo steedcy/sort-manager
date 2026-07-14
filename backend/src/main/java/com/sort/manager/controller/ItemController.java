@@ -2,12 +2,12 @@ package com.sort.manager.controller;
 
 import com.sort.manager.dto.ApiResponse;
 import com.sort.manager.dto.ItemDTO;
+import com.sort.manager.dto.PageResponse;
 import com.sort.manager.service.ItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,11 +18,16 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    public ApiResponse<List<ItemDTO>> getAll(
+    public ApiResponse<PageResponse<ItemDTO>> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Long locationId) {
-        return ApiResponse.ok(itemService.findAll(keyword, categoryId, locationId));
+            @RequestParam(required = false) Long locationId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String direction) {
+        return ApiResponse.ok(itemService.search(keyword, categoryId, locationId, status, page, size, sort, direction));
     }
 
     @GetMapping("/{id}")

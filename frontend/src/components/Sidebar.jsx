@@ -62,7 +62,7 @@ export default function Sidebar() {
         justifyContent: 'space-between',
         gap: '8px',
       }}>
-        <span style={{ fontSize: '11px', color: 'var(--sidebar-footer)' }}>v1.0.0</span>
+        <span style={{ fontSize: '11px', color: 'var(--sidebar-footer)' }}>v1.2.0</span>
 
         {/* Theme Toggle */}
         <button

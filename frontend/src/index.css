@@ -322,6 +322,19 @@ body {
   transition: all 0.2s ease;
   outline: none;
   font-family: inherit;
+  min-height: 40px;
+}
+.btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.btn:focus-visible,
+.btn-theme:focus-visible,
+.item-select-button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 
 .btn-primary {
@@ -451,6 +464,28 @@ body {
 /* ===================== Item Card ===================== */
 .item-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
 
+.item-select-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  background: rgba(15, 15, 26, 0.78);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  backdrop-filter: blur(6px);
+}
+
+[data-theme="light"] .item-select-button {
+  background: rgba(255, 255, 255, 0.88);
+}
+
 .item-image {
   width: 100%; aspect-ratio: 4/3; border-radius: 10px; object-fit: cover;
   background: var(--bg-hover);
@@ -486,6 +521,65 @@ body {
 /* ===================== Page titles ===================== */
 .page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
 .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+/* ===================== Items Toolbar & Pagination ===================== */
+.items-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.items-toolbar-control {
+  width: auto;
+  min-width: 120px;
+}
+
+.pagination-bar {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pagination-summary {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pagination-size {
+  width: auto;
+  min-width: 112px;
+}
+
+.batch-action-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  padding: 12px 24px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 1000;
+  border: 1px solid var(--border-default);
+}
 
 /* ===================== Grid Layouts ===================== */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
@@ -547,6 +641,34 @@ textarea.input { resize: vertical; min-height: 80px; }
   .page-content { padding: 16px; padding-bottom: 80px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .items-grid { grid-template-columns: repeat(2, 1fr); }
+  .items-toolbar .search-bar {
+    max-width: none;
+    min-width: 100%;
+  }
+  .items-toolbar-control {
+    flex: 1 1 140px;
+  }
+  .pagination-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .pagination-controls {
+    justify-content: stretch;
+  }
+  .pagination-controls .btn,
+  .pagination-size {
+    flex: 1 1 120px;
+  }
+  .batch-action-bar {
+    left: 16px;
+    right: 16px;
+    bottom: 82px;
+    transform: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+  }
 
   /* Bottom Nav */
   .bottom-nav {
