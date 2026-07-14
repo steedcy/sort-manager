@@ -1,20 +1,20 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/sort_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: root123
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/sort_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root123}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.MySQLDialect}
         format_sql: true
 
   servlet:
@@ -22,12 +22,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-# 文件上传存储路径
 app:
   upload:
-    path: src/main/resources/static/uploads/
-    url-prefix: /uploads/
+    path: ${APP_UPLOAD_PATH:uploads/}
+    url-prefix: ${APP_UPLOAD_URL_PREFIX:/uploads/}
 
 logging:
   level:
-    com.sort.manager: DEBUG
+    com.sort.manager: ${APP_LOG_LEVEL:DEBUG}

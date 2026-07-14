@@ -56,7 +56,7 @@ public class FileUploadController {
         String filename = UUID.randomUUID() + ext;
 
         try {
-            File dest = new File(uploadPath + filename);
+            File dest = new File(normalizePath(uploadPath) + filename);
             dest.getParentFile().mkdirs();
             file.transferTo(dest);
             String url = urlPrefix + filename;
@@ -64,5 +64,12 @@ public class FileUploadController {
         } catch (IOException e) {
             return ApiResponse.fail("File upload failed: " + e.getMessage());
         }
+    }
+
+    private String normalizePath(String path) {
+        if (path.endsWith("/") || path.endsWith("\\")) {
+            return path;
+        }
+        return path + File.separator;
     }
 }

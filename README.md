@@ -7,7 +7,7 @@ Sort Manager is a private daily item storage management system. It helps track h
 - Backend: Spring Boot 3.3.5, Spring Web, Spring Data JPA, Bean Validation, MySQL
 - Frontend: React 19, Vite 5, React Router, Axios, Tailwind CSS 4, lucide-react, PWA plugin
 - Database: MySQL 8.4
-- Runtime: JDK 26 installed locally, compiling Java release 17 bytecode
+- Runtime: JDK 21+ or JDK 26 installed locally, compiling Java release 17 bytecode
 
 ## Requirements
 
@@ -18,7 +18,7 @@ Sort Manager is a private daily item storage management system. It helps track h
 - MySQL 8.4
 - Git
 
-The current backend datasource expects:
+The current backend datasource defaults to:
 
 ```yaml
 url: jdbc:mysql://localhost:3306/sort_manager
@@ -26,7 +26,20 @@ username: root
 password: root123
 ```
 
-Adjust `backend/src/main/resources/application.yml` if your local MySQL credentials differ.
+Copy values from `.env.example` into your shell or local environment if your MySQL credentials differ. The most common values are:
+
+```powershell
+$env:DB_USERNAME="root"
+$env:DB_PASSWORD="root123"
+$env:APP_UPLOAD_PATH="uploads/"
+```
+
+Backend configuration supports these environment variables:
+
+- `SERVER_PORT`
+- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DRIVER`
+- `JPA_DDL_AUTO`, `JPA_SHOW_SQL`, `HIBERNATE_DIALECT`
+- `APP_UPLOAD_PATH`, `APP_UPLOAD_URL_PREFIX`, `APP_LOG_LEVEL`
 
 ## Setup
 
@@ -40,7 +53,7 @@ Install frontend dependencies:
 
 ```powershell
 cd frontend
-npm install
+npm ci
 ```
 
 ## Development
@@ -92,6 +105,11 @@ cd frontend
 npm run verify
 ```
 
+GitHub Actions runs the same quality gates on pushes and pull requests:
+
+- Backend: `mvn clean test`
+- Frontend: `npm ci`, `npm run lint`, `npm run build`
+
 ## Version Control
 
 Main branch: `main`
@@ -103,15 +121,38 @@ Feature work should use isolated branches or worktrees. The v1.1 quality upgrade
 Implemented modules:
 
 - Dashboard statistics
-- Item CRUD, filtering, image upload, batch delete, batch move
+- Item CRUD, paginated filtering, image upload, batch delete, batch move
 - Category CRUD
 - Hierarchical location CRUD
 - PWA build output
 - Backend validation and upload safety
+- GitHub Actions CI
+- Portable environment configuration via `.env.example`
 
 Known next steps:
 
 - Add browser-level end-to-end tests
-- Add pagination for larger item collections
 - Add import/export workflows
-- Replace local database credentials with environment variables for deployment
+- Add Docker Compose for one-command local startup
+
+## API Notes
+
+`GET /api/items` returns paginated data in v1.2.0:
+
+```json
+{
+  "success": true,
+  "data": {
+    "content": [],
+    "page": 0,
+    "size": 12,
+    "totalElements": 0,
+    "totalPages": 0,
+    "first": true,
+    "last": true,
+    "empty": true
+  }
+}
+```
+
+This replaces the older raw list response for the item list endpoint. Supported query parameters are `keyword`, `categoryId`, `locationId`, `status`, `page`, `size`, `sort`, and `direction`.

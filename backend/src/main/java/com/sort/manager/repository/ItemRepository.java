@@ -1,6 +1,7 @@
 package com.sort.manager.repository;
 
 import com.sort.manager.entity.Item;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,32 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findByFilters(@Param("keyword") String keyword,
                               @Param("categoryId") Long categoryId,
                               @Param("locationId") Long locationId);
+
+    @Query(value = "SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location " +
+            "WHERE (:keyword IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(i.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:categoryId IS NULL OR i.category.id = :categoryId) " +
+            "AND (:locationId IS NULL OR i.location.id = :locationId) " +
+            "AND (:status IS NULL " +
+            "OR (:status = 'expired' AND i.expiryDate IS NOT NULL AND i.expiryDate < :today) " +
+            "OR (:status = 'expiring' AND i.expiryDate IS NOT NULL AND i.expiryDate >= :today AND i.expiryDate <= :expiringBefore) " +
+            "OR (:status = 'normal' AND (i.expiryDate IS NULL OR i.expiryDate > :expiringBefore)))",
+            countQuery = "SELECT COUNT(i) FROM Item i " +
+                    "WHERE (:keyword IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "OR LOWER(i.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                    "AND (:categoryId IS NULL OR i.category.id = :categoryId) " +
+                    "AND (:locationId IS NULL OR i.location.id = :locationId) " +
+                    "AND (:status IS NULL " +
+                    "OR (:status = 'expired' AND i.expiryDate IS NOT NULL AND i.expiryDate < :today) " +
+                    "OR (:status = 'expiring' AND i.expiryDate IS NOT NULL AND i.expiryDate >= :today AND i.expiryDate <= :expiringBefore) " +
+                    "OR (:status = 'normal' AND (i.expiryDate IS NULL OR i.expiryDate > :expiringBefore)))")
+    Page<Item> searchByFilters(@Param("keyword") String keyword,
+                               @Param("categoryId") Long categoryId,
+                               @Param("locationId") Long locationId,
+                               @Param("status") String status,
+                               @Param("today") java.time.LocalDate today,
+                               @Param("expiringBefore") java.time.LocalDate expiringBefore,
+                               Pageable pageable);
 
     @Query("SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location ORDER BY i.createdAt DESC")
     List<Item> findAllWithDetails();

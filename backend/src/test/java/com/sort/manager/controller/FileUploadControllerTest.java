@@ -49,6 +49,19 @@ class FileUploadControllerTest {
         assertTrue(response.getData().get("url").startsWith("/uploads/"));
     }
 
+    @Test
+    void uploadNormalizesPathWithoutTrailingSeparator() {
+        FileUploadController controller = new FileUploadController();
+        ReflectionTestUtils.setField(controller, "uploadPath", tempDir.toString());
+        ReflectionTestUtils.setField(controller, "urlPrefix", "/uploads/");
+        MockMultipartFile file = new MockMultipartFile("file", "photo.png", "image/png", new byte[] {1, 2, 3});
+
+        ApiResponse<Map<String, String>> response = controller.upload(file);
+
+        assertTrue(response.isSuccess());
+        assertTrue(tempDir.resolve(response.getData().get("filename")).toFile().exists());
+    }
+
     private FileUploadController controller() {
         FileUploadController controller = new FileUploadController();
         ReflectionTestUtils.setField(controller, "uploadPath", tempDir.toString() + "\\");
