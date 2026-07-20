@@ -1,6 +1,13 @@
 @echo off
 setlocal
 
+if exist "%~dp0.env" (
+  echo Loading local configuration from .env...
+  for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%~dp0.env") do (
+    if not "%%A"=="" set "%%A=%%B"
+  )
+)
+
 set "MISSING=0"
 call :check java "Java runtime"
 call :check mvn "Maven"
@@ -17,19 +24,15 @@ if "%MISSING%"=="1" (
   exit /b 1
 )
 
-:: Convert backslashes to forward slashes to prevent escape character issues (\b, \f)
-set "DIR=%~dp0"
-set "DIR=%DIR:\=/%"
-
 echo ===================================================
 echo           Sort Manager App - One-click Start
 echo ===================================================
 echo.
 echo Starting Backend Server (Spring Boot)...
-start "Sort Manager - Backend" cmd /k "cd /d "%DIR%backend" && mvn spring-boot:run"
+start "Sort Manager - Backend" /d "%~dp0backend" cmd /k "mvn package -DskipTests && java -jar target\manager.jar"
 
 echo Starting Frontend Server (Vite/React)...
-start "Sort Manager - Frontend" cmd /k "cd /d "%DIR%frontend" && npm run dev"
+start "Sort Manager - Frontend" /d "%~dp0frontend" cmd /k npm run dev
 
 echo.
 echo ---------------------------------------------------

@@ -1,16 +1,25 @@
-# React + Vite
+# Sort Manager Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite 7 frontend for Sort Manager.
 
-Currently, two official plugins are available:
+```powershell
+npm ci
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The development server defaults to `http://localhost:5173` and proxies `/api` and
+`/uploads` to `http://localhost:8080`. Copy `.env.example` to `.env` to override
+`FRONTEND_PORT` or `BACKEND_URL`.
 
-## React Compiler
+Quality gate:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+npm run verify
+```
 
-## Expanding the ESLint configuration
+Real full-stack E2E (requires the backend and MySQL to be running):
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```powershell
+npx playwright install chromium
+npm run test:e2e
+```

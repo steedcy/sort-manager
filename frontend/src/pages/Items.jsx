@@ -312,7 +312,7 @@ export default function Items() {
           {items.map(item => {
             const isSelected = selectedItems.has(item.id)
             return (
-              <div key={item.id} className="card item-card" style={{ position: 'relative', border: isSelected ? '2px solid var(--primary)' : undefined }}>
+              <div key={item.id} data-testid="item-card" className="card item-card" style={{ position: 'relative', border: isSelected ? '2px solid var(--primary)' : undefined }}>
                 <button
                   type="button"
                   aria-label={isSelected ? `取消选择 ${item.name}` : `选择 ${item.name}`}
@@ -408,51 +408,51 @@ export default function Items() {
         <Modal title={editing ? '编辑物品' : '添加物品'}
           onClose={() => setShowModal(false)} onSubmit={handleSave} loading={saving}>
           <div className="input-group">
-            <label className="input-label">物品名称 *</label>
-            <input className="input" placeholder="如：充电宝、螺丝刀..." value={form.name}
+            <label className="input-label" htmlFor="item-name">物品名称 *</label>
+            <input id="item-name" className="input" placeholder="如：充电宝、螺丝刀..." value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}/>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div className="input-group">
-              <label className="input-label">分类</label>
-              <select className="input" value={form.categoryId}
+              <label className="input-label" htmlFor="item-category">分类</label>
+              <select id="item-category" className="input" value={form.categoryId}
                 onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}>
                 <option value="">未分类</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="input-group">
-              <label className="input-label">数量 *</label>
-              <input className="input" type="number" min="1" value={form.quantity}
+              <label className="input-label" htmlFor="item-quantity">数量 *</label>
+              <input id="item-quantity" className="input" type="number" min="1" value={form.quantity}
                 onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))}/>
             </div>
             <div className="input-group">
-              <label className="input-label">单价 (元) *</label>
-              <input className="input" type="number" min="0" step="0.01" value={form.price}
+              <label className="input-label" htmlFor="item-price">单价 (元) *</label>
+              <input id="item-price" className="input" type="number" min="0" step="0.01" value={form.price}
                 onChange={e => setForm(f => ({ ...f, price: e.target.value }))}/>
             </div>
             <div className="input-group">
-              <label className="input-label">购入日期 *</label>
-              <input className="input" type="date" value={form.purchaseDate}
+              <label className="input-label" htmlFor="item-purchase-date">购入日期 *</label>
+              <input id="item-purchase-date" className="input" type="date" value={form.purchaseDate}
                 onChange={e => setForm(f => ({ ...f, purchaseDate: e.target.value }))}/>
             </div>
             <div className="input-group">
-              <label className="input-label">有效期至</label>
-              <input className="input" type="date" value={form.expiryDate}
+              <label className="input-label" htmlFor="item-expiry-date">有效期至</label>
+              <input id="item-expiry-date" className="input" type="date" value={form.expiryDate}
                 onChange={e => setForm(f => ({ ...f, expiryDate: e.target.value }))}/>
             </div>
           </div>
           <div className="input-group">
-            <label className="input-label">存放位置 *</label>
-            <select className="input" value={form.locationId}
+            <label className="input-label" htmlFor="item-location">存放位置 *</label>
+            <select id="item-location" className="input" value={form.locationId}
               onChange={e => setForm(f => ({ ...f, locationId: e.target.value }))}>
               <option value="">请选择存放位置</option>
               {locations.map(l => <option key={l.id} value={l.id}>{l.treeName}</option>)}
             </select>
           </div>
           <div className="input-group">
-            <label className="input-label">描述</label>
-            <textarea className="input" placeholder="物品描述（可选）" value={form.description}
+            <label className="input-label" htmlFor="item-description">描述</label>
+            <textarea id="item-description" className="input" placeholder="物品描述（可选）" value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}/>
           </div>
           <div className="input-group">

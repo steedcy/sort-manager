@@ -13,7 +13,7 @@
 
     <groupId>com.sort</groupId>
     <artifactId>manager</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <name>sort-manager</name>
     <description>Daily Item Storage Management System</description>
 
@@ -47,6 +47,15 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -71,6 +80,7 @@
     </dependencies>
 
     <build>
+        <finalName>manager</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
