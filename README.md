@@ -136,6 +136,9 @@ Main branch: `main`
 
 Feature work should use isolated branches or worktrees. The v1.1 quality upgrade was developed with the Superpowers workflow in `feature/v1-1-quality-upgrade`.
 
+The sanitized project conversation and engineering timeline is maintained in
+[`docs/history/project-conversation-and-development-history.md`](docs/history/project-conversation-and-development-history.md).
+
 ## Current Scope
 
 Implemented modules:
