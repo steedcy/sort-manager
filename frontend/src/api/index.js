@@ -44,6 +44,7 @@ export const itemApi = {
   update: (id, data) => api.put(`/items/${id}`, data),
   move: (id, locationId) => api.put(`/items/${id}/move`, { locationId }),
   delete: (id) => api.delete(`/items/${id}`),
+  batch: (data) => api.post('/items/batch', data),
 }
 
 export const dashboardApi = {

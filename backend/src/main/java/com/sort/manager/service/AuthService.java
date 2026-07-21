@@ -69,7 +69,7 @@ public class AuthService {
 
     @Transactional
     public void logout(String rawToken) {
-        refreshTokenService.revoke(rawToken, currentHousehold.requireUserId());
+        refreshTokenService.revoke(rawToken);
     }
 
     @Transactional(readOnly = true)

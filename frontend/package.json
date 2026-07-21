@@ -1,15 +1,16 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test:unit": "node --test src/utils/bulkParser.test.js",
     "preview": "vite preview",
     "test:e2e": "playwright test",
-    "verify": "npm audit --audit-level=high && npm run lint && npm run build"
+    "verify": "npm audit --audit-level=high && npm run test:unit && npm run lint && npm run build"
   },
   "engines": {
     "node": ">=20.19.0"

@@ -1,0 +1,50 @@
+<view class="page-shell items-page">
+  <view class="page-kicker">HOUSEHOLD INDEX</view>
+  <view class="page-title">查找物品</view>
+  <view class="page-lead">按名称搜索，结果每次加载 20 条。</view>
+
+  <view class="search-bar">
+    <view class="search-glyph" aria-hidden="true"></view>
+    <input class="search-input" value="{{keyword}}" placeholder="例如：电池、雨伞、药箱" confirm-type="search" bindinput="onKeywordInput" />
+    <button wx:if="{{keyword}}" class="search-clear" aria-label="清空搜索" bindtap="clearSearch">清空</button>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-panel" aria-label="正在加载">
+    <view class="state-title">正在查找物品</view>
+    <view>正在整理当前家庭的记录</view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card state-panel" role="alert">
+    <view class="state-title">物品列表没有加载出来</view>
+    <view>{{error}}</view>
+    <button class="button-secondary state-action" bindtap="loadFirstPage">重新加载</button>
+  </view>
+
+  <view wx:elif="{{!items.length}}" class="card state-panel">
+    <view class="empty-mark" aria-hidden="true"><view></view><view></view><view></view></view>
+    <view class="state-title">{{keyword ? '没有匹配的物品' : '还没有物品记录'}}</view>
+    <view>{{keyword ? '试试更短的名称，或清空搜索。' : '从一件最常用的物品开始登记。'}}</view>
+    <button wx:if="{{keyword}}" class="button-secondary state-action" bindtap="clearSearch">清空搜索</button>
+    <button wx:else class="button-primary state-action" bindtap="goToAdd">快速录入</button>
+  </view>
+
+  <view wx:else class="item-list">
+    <view wx:for="{{items}}" wx:key="id" class="item-card">
+      <view class="item-card__top">
+        <view class="item-card__name">{{item.name}}</view>
+        <view class="item-card__quantity">× {{item.quantity}}</view>
+      </view>
+      <view class="item-card__meta">
+        <text>{{item.categoryName || '未分类'}}</text>
+        <text class="meta-separator">/</text>
+        <text>{{item.locationName || '未设置位置'}}</text>
+      </view>
+      <view wx:if="{{item.expiryDate}}" class="item-card__date">到期日期 {{item.expiryDate}}</view>
+    </view>
+    <view class="list-footer">
+      <text wx:if="{{loadingMore}}">正在加载更多</text>
+      <text wx:elif="{{hasMore}}">继续上拉加载</text>
+      <text wx:else>已经看到全部 {{items.length}} 条记录</text>
+    </view>
+  </view>
+</view>

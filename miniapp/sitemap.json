@@ -1,0 +1,4 @@
+{
+  "desc": "家庭内部工具不参与微信搜索索引",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

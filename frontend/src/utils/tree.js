@@ -15,7 +15,7 @@ export function buildLocationTreeOptions(locations) {
 
   const result = []
 
-  function traverse(node, depth, isLast) {
+  function traverse(node, depth, isLast, parentPath = '') {
     let prefix = ''
     if (depth > 0) {
       prefix = '\u00A0\u00A0\u00A0\u00A0'.repeat(depth - 1)
@@ -24,16 +24,17 @@ export function buildLocationTreeOptions(locations) {
     
     result.push({
       ...node,
-      treeName: prefix + node.name
+      treeName: prefix + node.name,
+      canonicalPath: parentPath ? `${parentPath} > ${node.name}` : node.name
     })
 
     if (node.children) {
       node.children.forEach((child, index) => {
-        traverse(child, depth + 1, index === node.children.length - 1)
+        traverse(child, depth + 1, index === node.children.length - 1, parentPath ? `${parentPath} > ${node.name}` : node.name)
       })
     }
   }
 
-  roots.forEach(root => traverse(root, 0, false))
+  roots.forEach(root => traverse(root, 0, false, ''))
   return result
 }

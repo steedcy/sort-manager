@@ -1,8 +1,11 @@
 package com.sort.manager.controller;
 
 import com.sort.manager.dto.ApiResponse;
+import com.sort.manager.dto.ItemBatchRequest;
+import com.sort.manager.dto.ItemBatchResponse;
 import com.sort.manager.dto.ItemDTO;
 import com.sort.manager.dto.PageResponse;
+import com.sort.manager.service.ItemBatchService;
 import com.sort.manager.service.ItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import java.util.Map;
 public class ItemController {
 
     private final ItemService itemService;
+    private final ItemBatchService itemBatchService;
 
     @GetMapping
     public ApiResponse<PageResponse<ItemDTO>> getAll(
@@ -38,6 +42,11 @@ public class ItemController {
     @PostMapping
     public ApiResponse<ItemDTO> create(@Valid @RequestBody ItemDTO dto) {
         return ApiResponse.ok("物品添加成功", itemService.create(dto));
+    }
+
+    @PostMapping("/batch")
+    public ApiResponse<ItemBatchResponse> batch(@Valid @RequestBody ItemBatchRequest request) {
+        return ApiResponse.ok(itemBatchService.process(request));
     }
 
     @PutMapping("/{id}")

@@ -97,6 +97,7 @@ export default function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     const refreshToken = authStorage.getRefreshToken()
     const accessToken = authStorage.getAccessToken()
+    if (user) sessionStorage.removeItem(`sort-manager:bulk-items-draft:v1:${user.id}:${user.householdId}`)
     expire()
     if (refreshToken && accessToken) {
       try {
@@ -105,7 +106,7 @@ export default function AuthProvider({ children }) {
         // The local session is already cleared if the server is unavailable.
       }
     }
-  }, [expire])
+  }, [expire, user])
 
   const value = useMemo(() => ({
     user,

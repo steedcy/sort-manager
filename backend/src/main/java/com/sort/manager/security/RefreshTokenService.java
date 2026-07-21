@@ -78,6 +78,12 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public void revoke(String rawToken) {
+        tokenRepository.findByTokenHashForUpdate(hash(rawToken))
+                .ifPresent(token -> tokenRepository.revokeFamily(token.getTokenFamily(), clock.instant()));
+    }
+
+    @Transactional
     public void revokeAllForUser(Long userId) {
         tokenRepository.revokeAllForUser(userId, clock.instant());
     }

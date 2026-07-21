@@ -112,6 +112,35 @@ class AuthSecurityIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void logoutRevokesRefreshTokenEvenWhenAccessTokenHasExpired() throws Exception {
+        String loginJson = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"test-owner","password":"Test-password-2026!"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String refreshToken = objectMapper.readTree(loginJson).path("data").path("refreshToken").asText();
+        String body = objectMapper.writeValueAsString(java.util.Map.of("refreshToken", refreshToken));
+        String rotatedJson = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String replacement = objectMapper.readTree(rotatedJson).path("data").path("refreshToken").asText();
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of("refreshToken", replacement))))
+                .andExpect(status().isUnauthorized());
+    }
+
     private HouseholdMember persistMember(String username, HouseholdRole role, boolean enabled) {
         AppUser user = new AppUser();
         user.setUsername(username);

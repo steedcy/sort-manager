@@ -1,0 +1,73 @@
+<view class="page-shell">
+  <view class="overview-head">
+    <view>
+      <view class="page-kicker">FAMILY LEDGER</view>
+      <view class="page-title">家中物品，一目了然</view>
+      <view class="page-lead">下拉即可更新当前家庭的库存账本。</view>
+    </view>
+    <view class="ledger-seal" aria-label="账本已同步">
+      <view class="ledger-seal__dot"></view>
+      <text>家庭账本</text>
+      <text class="ledger-seal__small">已同步</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-panel" aria-label="正在加载">
+    <view class="state-title">正在翻阅账本</view>
+    <view>马上就好</view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card state-panel" role="alert">
+    <view class="state-title">总览暂时没有更新</view>
+    <view>{{error}}</view>
+    <button class="button-secondary state-action" bindtap="loadStats">重新加载</button>
+  </view>
+
+  <block wx:elif="{{stats}}">
+    <view class="metric-grid">
+      <view class="metric metric--primary">
+        <text class="metric__value">{{stats.totalItems}}</text>
+        <text class="metric__label">物品记录</text>
+      </view>
+      <view class="metric">
+        <text class="metric__value">{{stats.totalLocations}}</text>
+        <text class="metric__label">收纳位置</text>
+      </view>
+      <view class="metric">
+        <text class="metric__value">{{stats.totalCategories}}</text>
+        <text class="metric__label">分类</text>
+      </view>
+      <view class="metric {{stats.expiringCount ? 'metric--notice' : ''}}">
+        <text class="metric__value">{{stats.expiringCount}}</text>
+        <text class="metric__label">临期提醒</text>
+      </view>
+    </view>
+
+    <view class="asset-strip">
+      <view>
+        <view class="asset-strip__label">已记录资产价值</view>
+        <view class="asset-strip__value">¥ {{stats.totalAssetDisplay}}</view>
+      </view>
+      <view class="status-pill">仅当前家庭</view>
+    </view>
+
+    <view class="section-row">
+      <view class="section-heading">最近录入</view>
+      <button class="button-text section-row__action" bindtap="goToItems">查看全部</button>
+    </view>
+    <view wx:if="{{stats.recentItems.length}}" class="recent-list">
+      <view wx:for="{{stats.recentItems}}" wx:key="id" class="recent-item">
+        <view class="recent-item__index">{{index + 1}}</view>
+        <view class="recent-item__body">
+          <view class="recent-item__name">{{item.name}}</view>
+          <view class="recent-item__meta">{{item.locationName || '未设置位置'}} · 数量 {{item.quantity}}</view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="card state-panel">
+      <view class="state-title">账本还是空的</view>
+      <view>先登记一件常用物品，之后查找会更轻松。</view>
+      <button class="button-primary state-action" bindtap="goToAdd">快速录入</button>
+    </view>
+  </block>
+</view>

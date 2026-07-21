@@ -6,6 +6,7 @@ Sort Manager is a private daily item storage management system. It helps track h
 
 - Backend: Spring Boot 3.3.5, Spring Security, Spring Web, Spring Data JPA, Flyway, Bean Validation, MySQL
 - Frontend: React 19, Vite 7, React Router, Axios, Tailwind CSS 4, lucide-react, PWA plugin
+- Mini program: native WeChat Mini Program (JavaScript, WXML, WXSS)
 - Database: MySQL 8.4
 - Runtime: JDK 21+ or JDK 26 installed locally, compiling Java release 17 bytecode
 
@@ -47,13 +48,11 @@ Backend configuration supports these environment variables:
 - `APP_UPLOAD_PATH`, `APP_LOG_LEVEL`
 - `APP_JWT_SECRET`, `APP_JWT_ACCESS_TTL_SECONDS`, `APP_REFRESH_TTL_DAYS`
 - `APP_LOGIN_MAX_ATTEMPTS`, `APP_LOGIN_BLOCK_SECONDS`, `APP_LOGIN_MAX_TRACKED_ATTEMPTS`
-- `APP_LOGIN_MAX_ATTEMPTS`, `APP_LOGIN_BLOCK_SECONDS`
 - `APP_BOOTSTRAP_USERNAME`, `APP_BOOTSTRAP_PASSWORD`, `APP_BOOTSTRAP_DISPLAY_NAME`, `APP_BOOTSTRAP_HOUSEHOLD_NAME`
 
 ## Setup
 
 Create an empty database and a least-privilege application account. On first backend startup
-Flyway creates schema version 3, including the default household and account tables. Existing
 Flyway migrates the schema to v4; V3 assigns v1.3 data to the default household and V4 aligns
 refresh-token column types with Hibernate. Back up a populated database before
 the upgrade: MySQL DDL is not transactionally rolled back, so recovery means restoring that backup.
@@ -137,6 +136,14 @@ npm run build
 npm run test:e2e
 ```
 
+Mini program:
+
+```powershell
+cd miniapp
+npm test
+npm run check
+```
+
 Combined frontend verification:
 
 ```powershell
@@ -149,6 +156,7 @@ GitHub Actions runs the same quality gates on pushes and pull requests:
 - Backend: `mvn clean test`
 - Frontend: `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run build`
 - Full stack: MySQL 8.4, packaged backend JAR, authenticated API readiness, Vite, desktop Chromium flows and a mobile login smoke test
+- Mini program: request/auth utility tests and JavaScript syntax checks
 
 ## Version Control
 
@@ -165,19 +173,21 @@ Implemented modules:
 
 - Dashboard statistics
 - Item CRUD, paginated filtering, image upload, batch delete, batch move
+- Atomic bulk item validation/import (up to 100 rows) and the Web intake-tray workflow
 - Category CRUD
 - Hierarchical location CRUD
 - Family OWNER/MEMBER accounts, login, refresh rotation and member enable/disable
 - Household-scoped business data and authenticated image access
 - PWA build output
+- Native WeChat Mini Program foundation for login, dashboard, search and quick entry
 - Backend validation and upload safety
 - GitHub Actions CI
 - Portable environment configuration via `.env.example`
 
 Known next steps:
 
-- Add import/export workflows
-- Add the mobile mini-program client
+- Add export, `.xlsx`, barcode/OCR and batch image workflows
+- Add WeChat login, offline cache and Mini Program automated UI tests
 - Add Docker Compose for one-command local startup
 - Add automated encrypted backups and deployment automation
 
@@ -206,6 +216,17 @@ Authenticate with `POST /api/v1/auth/login`; use the one-time refresh token with
 ```
 
 This replaces the older raw list response for the item list endpoint. Supported query parameters are `keyword`, `categoryId`, `locationId`, `status`, `page`, `size`, `sort`, and `direction`.
+
+`POST /api/v1/items/batch` accepts up to 100 rows. Send `validateOnly: true` first to receive
+per-row `fieldErrors`; send the same valid rows with `validateOnly: false` to commit them in one
+transaction. If any row is invalid, `createdCount` remains zero.
+
+## WeChat Mini Program
+
+Copy `miniapp/config.example.js` to the ignored `miniapp/config.js`, set the HTTPS `/api/v1`
+address, then import `miniapp/` into WeChat Developer Tools with your own AppID. The API host
+must be registered as a request domain in the WeChat public platform. See
+[`miniapp/README.md`](miniapp/README.md) for local checks and security notes.
 
 ## Production deployment
 

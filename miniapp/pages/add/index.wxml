@@ -1,0 +1,80 @@
+<view class="page-shell add-page">
+  <view class="page-kicker">QUICK ENTRY</view>
+  <view class="page-title">随手登记一件</view>
+  <view class="page-lead">只填名称和数量即可保存，其他信息按需补充。</view>
+
+  <view class="entry-ticket">
+    <view class="entry-ticket__number">NEW</view>
+    <view class="entry-ticket__body">
+      <text>家庭账本录入单</text>
+      <text class="entry-ticket__sub">保存后全家账号可查询</text>
+    </view>
+  </view>
+
+  <view class="card form-card">
+    <view class="field">
+      <label class="field-label" for="item-name">物品名称 *</label>
+      <input id="item-name" class="input {{errors.name ? 'input-error' : ''}}" value="{{form.name}}" data-field="name" maxlength="200" placeholder="例如：5 号电池" bindinput="updateField" />
+      <view wx:if="{{errors.name}}" class="field-error" role="alert">{{errors.name}}</view>
+    </view>
+
+    <view class="field">
+      <label class="field-label" for="quantity">数量 *</label>
+      <input id="quantity" class="input {{errors.quantity ? 'input-error' : ''}}" value="{{form.quantity}}" data-field="quantity" type="number" maxlength="7" bindinput="updateField" />
+      <view wx:if="{{errors.quantity}}" class="field-error" role="alert">{{errors.quantity}}</view>
+    </view>
+
+    <button class="more-toggle" aria-expanded="{{showMore}}" bindtap="toggleMore">
+      <text>{{showMore ? '收起补充信息' : '补充分类、位置和日期'}}</text>
+      <text class="more-toggle__mark">{{showMore ? '−' : '+'}}</text>
+    </button>
+
+    <view wx:if="{{showMore}}" class="optional-fields">
+      <view wx:if="{{metadataLoading}}" class="metadata-note">正在加载家庭分类和位置</view>
+      <view wx:if="{{metadataError}}" class="metadata-error" role="alert">
+        <text>{{metadataError}}</text>
+        <button class="metadata-retry" bindtap="loadMetadata">重试</button>
+      </view>
+
+      <view class="field">
+        <view class="field-label">分类</view>
+        <picker range="{{categories}}" range-key="name" bindchange="selectCategory" disabled="{{!categories.length}}">
+          <view class="picker-value">{{categoryIndex >= 0 ? categories[categoryIndex].name : '选择分类（可选）'}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <view class="field-label">位置</view>
+        <picker range="{{locations}}" range-key="name" bindchange="selectLocation" disabled="{{!locations.length}}">
+          <view class="picker-value">{{locationIndex >= 0 ? locations[locationIndex].name : '选择位置（可选）'}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <label class="field-label" for="price">单价</label>
+        <input id="price" class="input {{errors.price ? 'input-error' : ''}}" value="{{form.price}}" data-field="price" type="digit" placeholder="0.00" bindinput="updateField" />
+        <view wx:if="{{errors.price}}" class="field-error" role="alert">{{errors.price}}</view>
+      </view>
+      <view class="date-grid">
+        <view class="field">
+          <view class="field-label">购买日期</view>
+          <picker mode="date" value="{{form.purchaseDate}}" data-field="purchaseDate" bindchange="selectDate">
+            <view class="picker-value">{{form.purchaseDate || '选择日期'}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <view class="field-label">到期日期</view>
+          <picker mode="date" value="{{form.expiryDate}}" data-field="expiryDate" bindchange="selectDate">
+            <view class="picker-value">{{form.expiryDate || '选择日期'}}</view>
+          </picker>
+        </view>
+      </view>
+      <view class="field">
+        <label class="field-label" for="description">备注</label>
+        <textarea id="description" class="textarea" value="{{form.description}}" data-field="description" maxlength="1000" placeholder="例如：适用于客厅遥控器" bindinput="updateField"></textarea>
+      </view>
+    </view>
+
+    <button class="button-primary submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submit">
+      {{submitting ? '正在保存' : '保存到家庭账本'}}
+    </button>
+  </view>
+</view>

@@ -20,5 +20,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     Optional<Category> findByIdAndHouseholdId(Long id, Long householdId);
 
+    List<Category> findAllByHouseholdIdAndIdIn(Long householdId, List<Long> ids);
+
     long countByHouseholdId(Long householdId);
 }

@@ -56,10 +56,31 @@ jobs:
       - name: Build
         run: npm run build
 
+  miniapp:
+    name: Mini Program checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: miniapp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+
+      - name: Test request and data utilities
+        run: npm test
+
+      - name: Check JavaScript and JSON
+        run: npm run check
+
   e2e:
     name: Full-stack E2E
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    needs: [backend, frontend, miniapp]
     services:
       mysql:
         image: mysql:8.4

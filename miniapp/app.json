@@ -1,0 +1,30 @@
+{
+  "pages": [
+    "pages/overview/index",
+    "pages/items/index",
+    "pages/add/index",
+    "pages/profile/index",
+    "pages/login/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "家庭物品账本",
+    "navigationBarBackgroundColor": "#F8FAFC",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F8FAFC",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#64748B",
+    "selectedColor": "#4338CA",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/overview/index", "text": "总览" },
+      { "pagePath": "pages/items/index", "text": "物品" },
+      { "pagePath": "pages/add/index", "text": "录入" },
+      { "pagePath": "pages/profile/index", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

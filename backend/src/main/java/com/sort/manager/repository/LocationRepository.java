@@ -20,5 +20,7 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
 
     Optional<Location> findByIdAndHouseholdId(Long id, Long householdId);
 
+    List<Location> findAllByHouseholdIdAndIdIn(Long householdId, List<Long> ids);
+
     long countByHouseholdId(Long householdId);
 }

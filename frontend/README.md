@@ -33,5 +33,7 @@ npm run test:e2e
 ```
 
 The suite logs in through both the UI and API, covers authenticated item management, OWNER
-member management, logout, and a Pixel-sized mobile authentication smoke test. Credentials and
-tokens are not written to test output.
+member management, logout, v1.5 bulk preview/atomic commit, and 375 px mobile workflows.
+The bulk workspace is available at `/items/bulk`; it accepts pasted Excel/WPS tables or UTF-8
+CSV files and keeps an in-tab draft until commit or logout. Credentials and tokens are not
+written to test output.

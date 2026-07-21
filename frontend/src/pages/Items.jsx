@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { itemApi, categoryApi, locationApi } from '../api'
 import {
   Plus,
@@ -12,6 +13,7 @@ import {
   Square,
   ChevronLeft,
   ChevronRight,
+  ArchiveRestore,
 } from 'lucide-react'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
@@ -251,7 +253,10 @@ export default function Items() {
           <div className="page-title-line"><Package size={24} aria-hidden="true" /><h1 className="page-title">物品管理</h1></div>
           <p className="page-subtitle">共 {pageData.totalElements} 件物品，当前显示 {items.length} 件</p>
         </div>
-        <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加物品</button>
+        <div className="items-heading-actions">
+          <Link className="btn btn-secondary" to="/items/bulk"><ArchiveRestore size={16}/>批量录入</Link>
+          <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加物品</button>
+        </div>
       </div>
 
       <div className="items-toolbar">

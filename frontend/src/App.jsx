@@ -11,6 +11,7 @@ import Locations from './pages/Locations'
 import Categories from './pages/Categories'
 import Login from './pages/Login'
 import Members from './pages/Members'
+import BulkItems from './pages/BulkItems'
 
 export default function App() {
   const themeState = useTheme()
@@ -25,6 +26,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route index element={<Dashboard />} />
                 <Route path="items" element={<Items />} />
+                <Route path="items/bulk" element={<BulkItems />} />
                 <Route path="locations" element={<Locations />} />
                 <Route path="categories" element={<Categories />} />
                 <Route element={<ProtectedRoute role="OWNER" />}>
