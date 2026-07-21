@@ -5,6 +5,7 @@ import com.sort.manager.dto.ItemDTO;
 import com.sort.manager.repository.CategoryRepository;
 import com.sort.manager.repository.ItemRepository;
 import com.sort.manager.repository.LocationRepository;
+import com.sort.manager.security.CurrentHousehold;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -27,14 +28,16 @@ public class DashboardService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final ItemService itemService;
+    private final CurrentHousehold currentHousehold;
 
     @Transactional(readOnly = true)
     public DashboardDTO getStats() {
         DashboardDTO dto = new DashboardDTO();
-        dto.setTotalItems(itemRepository.count());
-        dto.setTotalLocations(locationRepository.count());
-        dto.setTotalCategories(categoryRepository.count());
-        dto.setUncategorizedItems(itemRepository.countByCategoryIsNull());
+        Long householdId = currentHousehold.requireHouseholdId();
+        dto.setTotalItems(itemRepository.countByHouseholdId(householdId));
+        dto.setTotalLocations(locationRepository.countByHouseholdId(householdId));
+        dto.setTotalCategories(categoryRepository.countByHouseholdId(householdId));
+        dto.setUncategorizedItems(itemRepository.countByHouseholdIdAndCategoryIsNull(householdId));
         dto.setRecentItems(itemService.findRecent(8));
 
         // 计算总资产与临期/过期物品
@@ -66,12 +69,12 @@ public class DashboardService {
         dto.setExpiringItems(expiringList);
 
         // 分类统计
-        List<Object[]> catStats = itemRepository.countByCategory();
+        List<Object[]> catStats = itemRepository.countByCategory(householdId);
         List<Map<String, Object>> categoryStats = new ArrayList<>();
         for (Object[] row : catStats) {
             Long catId = (Long) row[0];
             Long count = (Long) row[1];
-            categoryRepository.findById(catId).ifPresent(cat -> {
+            categoryRepository.findByIdAndHouseholdId(catId, householdId).ifPresent(cat -> {
                 Map<String, Object> m = new HashMap<>();
                 m.put("id", catId);
                 m.put("name", cat.getName());
@@ -84,7 +87,7 @@ public class DashboardService {
         dto.setCategoryStats(categoryStats);
 
         // 位置统计（取物品最多的前8个）
-        List<Object[]> locStats = itemRepository.countByLocation();
+        List<Object[]> locStats = itemRepository.countByLocation(householdId);
         List<Map<String, Object>> locationStats = locStats.stream()
                 .sorted((a, b) -> Long.compare((Long) b[1], (Long) a[1]))
                 .limit(8)
@@ -94,7 +97,7 @@ public class DashboardService {
                     Map<String, Object> m = new HashMap<>();
                     m.put("id", locId);
                     m.put("count", count);
-                    locationRepository.findById(locId).ifPresent(loc -> m.put("name", loc.getName()));
+                    locationRepository.findByIdAndHouseholdId(locId, householdId).ifPresent(loc -> m.put("name", loc.getName()));
                     return m;
                 })
                 .collect(Collectors.toList());

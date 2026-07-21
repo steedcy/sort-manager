@@ -45,10 +45,6 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: backendUrl,
           changeOrigin: true,
-        },
-        '/uploads': {
-          target: backendUrl,
-          changeOrigin: true,
         }
       }
     }

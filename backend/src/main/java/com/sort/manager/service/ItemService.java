@@ -8,6 +8,7 @@ import com.sort.manager.entity.Location;
 import com.sort.manager.repository.CategoryRepository;
 import com.sort.manager.repository.ItemRepository;
 import com.sort.manager.repository.LocationRepository;
+import com.sort.manager.security.CurrentHousehold;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,10 +45,11 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
+    private final CurrentHousehold currentHousehold;
 
     @Transactional(readOnly = true)
     public List<ItemDTO> findAll(String keyword, Long categoryId, Long locationId) {
-        List<Item> items = itemRepository.findByFilters(keyword, categoryId, locationId);
+        List<Item> items = itemRepository.findByFilters(currentHousehold.requireHouseholdId(), keyword, categoryId, locationId);
         return items.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -69,6 +71,7 @@ public class ItemService {
         LocalDate today = LocalDate.now();
 
         Page<Item> result = itemRepository.searchByFilters(
+                currentHousehold.requireHouseholdId(),
                 normalizedKeyword,
                 categoryId,
                 locationId,
@@ -86,7 +89,7 @@ public class ItemService {
 
     @Transactional(readOnly = true)
     public ItemDTO findById(Long id) {
-        Item item = itemRepository.findById(id)
+        Item item = itemRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
                 .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         return toDTO(item);
     }
@@ -94,13 +97,14 @@ public class ItemService {
     @Transactional
     public ItemDTO create(ItemDTO dto) {
         Item item = new Item();
+        item.setHouseholdId(currentHousehold.requireHouseholdId());
         fillItem(item, dto);
         return toDTO(itemRepository.save(item));
     }
 
     @Transactional
     public ItemDTO update(Long id, ItemDTO dto) {
-        Item item = itemRepository.findById(id)
+        Item item = itemRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
                 .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         fillItem(item, dto);
         return toDTO(itemRepository.save(item));
@@ -108,10 +112,11 @@ public class ItemService {
 
     @Transactional
     public ItemDTO move(Long id, Long locationId) {
-        Item item = itemRepository.findById(id)
+        Long householdId = currentHousehold.requireHouseholdId();
+        Item item = itemRepository.findByIdAndHouseholdId(id, householdId)
                 .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         if (locationId != null) {
-            Location location = locationRepository.findById(locationId)
+            Location location = locationRepository.findByIdAndHouseholdId(locationId, householdId)
                     .orElseThrow(() -> new IllegalArgumentException("Location not found: " + locationId));
             item.setLocation(location);
         } else {
@@ -122,12 +127,14 @@ public class ItemService {
 
     @Transactional
     public void delete(Long id) {
-        itemRepository.deleteById(id);
+        Item item = itemRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
+                .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
+        itemRepository.delete(item);
     }
 
     @Transactional(readOnly = true)
     public List<ItemDTO> findRecent(int limit) {
-        return itemRepository.findTop5ByOrderByCreatedAtDesc(PageRequest.of(0, limit))
+        return itemRepository.findRecent(currentHousehold.requireHouseholdId(), PageRequest.of(0, limit))
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -160,14 +167,14 @@ public class ItemService {
 
         item.setImageUrl(dto.getImageUrl());
         if (dto.getCategoryId() != null) {
-            Category category = categoryRepository.findById(dto.getCategoryId())
+            Category category = categoryRepository.findByIdAndHouseholdId(dto.getCategoryId(), item.getHouseholdId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found: " + dto.getCategoryId()));
             item.setCategory(category);
         } else {
             item.setCategory(null);
         }
         if (dto.getLocationId() != null) {
-            Location location = locationRepository.findById(dto.getLocationId())
+            Location location = locationRepository.findByIdAndHouseholdId(dto.getLocationId(), item.getHouseholdId())
                     .orElseThrow(() -> new IllegalArgumentException("Location not found: " + dto.getLocationId()));
             item.setLocation(location);
         } else {

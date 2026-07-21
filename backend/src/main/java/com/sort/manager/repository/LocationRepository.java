@@ -6,14 +6,19 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LocationRepository extends JpaRepository<Location, Long> {
 
-    List<Location> findByParentIsNull();
+    List<Location> findByHouseholdIdAndParentIsNull(Long householdId);
 
-    List<Location> findByParentId(Long parentId);
+    List<Location> findByHouseholdIdAndParentId(Long householdId, Long parentId);
 
-    @Query("SELECT l FROM Location l ORDER BY l.createdAt ASC")
-    List<Location> findAllOrdered();
+    @Query("SELECT l FROM Location l WHERE l.householdId = :householdId ORDER BY l.createdAt ASC")
+    List<Location> findAllOrdered(Long householdId);
+
+    Optional<Location> findByIdAndHouseholdId(Long id, Long householdId);
+
+    long countByHouseholdId(Long householdId);
 }

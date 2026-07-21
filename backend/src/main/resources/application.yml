@@ -9,6 +9,7 @@ spring:
     driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:validate}
     show-sql: ${JPA_SHOW_SQL:false}
@@ -19,7 +20,7 @@ spring:
 
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
-    baseline-on-migrate: true
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
     baseline-version: 1
     locations: classpath:db/migration
 
@@ -29,12 +30,23 @@ spring:
       max-request-size: 10MB
 
 app:
+  auth:
+    jwt-secret: ${APP_JWT_SECRET:}
+    access-ttl-seconds: ${APP_JWT_ACCESS_TTL_SECONDS:900}
+    refresh-ttl-days: ${APP_REFRESH_TTL_DAYS:30}
+    login-max-attempts: ${APP_LOGIN_MAX_ATTEMPTS:5}
+    login-block-seconds: ${APP_LOGIN_BLOCK_SECONDS:600}
+    login-max-tracked-attempts: ${APP_LOGIN_MAX_TRACKED_ATTEMPTS:10000}
+  bootstrap:
+    username: ${APP_BOOTSTRAP_USERNAME:}
+    password: ${APP_BOOTSTRAP_PASSWORD:}
+    display-name: ${APP_BOOTSTRAP_DISPLAY_NAME:家庭管理员}
+    household-name: ${APP_BOOTSTRAP_HOUSEHOLD_NAME:我的家庭}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   upload:
     path: ${APP_UPLOAD_PATH:uploads/}
-    url-prefix: ${APP_UPLOAD_URL_PREFIX:/uploads/}
 
 logging:
   level:
-    com.sort.manager: ${APP_LOG_LEVEL:DEBUG}
+    com.sort.manager: ${APP_LOG_LEVEL:INFO}

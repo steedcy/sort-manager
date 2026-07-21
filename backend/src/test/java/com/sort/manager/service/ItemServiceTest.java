@@ -5,6 +5,7 @@ import com.sort.manager.entity.Item;
 import com.sort.manager.repository.CategoryRepository;
 import com.sort.manager.repository.ItemRepository;
 import com.sort.manager.repository.LocationRepository;
+import com.sort.manager.security.CurrentHousehold;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
@@ -23,11 +24,13 @@ class ItemServiceTest {
         ItemRepository itemRepository = mock(ItemRepository.class);
         CategoryRepository categoryRepository = mock(CategoryRepository.class);
         LocationRepository locationRepository = mock(LocationRepository.class);
-        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository);
+        CurrentHousehold currentHousehold = mock(CurrentHousehold.class);
+        when(currentHousehold.requireHouseholdId()).thenReturn(1L);
+        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository, currentHousehold);
 
         ItemDTO dto = validItem();
         dto.setCategoryId(99L);
-        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
+        when(categoryRepository.findByIdAndHouseholdId(99L, 1L)).thenReturn(Optional.empty());
         when(itemRepository.save(any(Item.class))).thenAnswer((Answer<Item>) invocation -> invocation.getArgument(0));
 
         assertThrows(IllegalArgumentException.class, () -> service.create(dto));
@@ -38,7 +41,9 @@ class ItemServiceTest {
         ItemRepository itemRepository = mock(ItemRepository.class);
         CategoryRepository categoryRepository = mock(CategoryRepository.class);
         LocationRepository locationRepository = mock(LocationRepository.class);
-        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository);
+        CurrentHousehold currentHousehold = mock(CurrentHousehold.class);
+        when(currentHousehold.requireHouseholdId()).thenReturn(1L);
+        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository, currentHousehold);
 
         ItemDTO dto = validItem();
         dto.setQuantity(0);

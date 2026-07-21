@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { X, Image } from 'lucide-react'
 import { uploadApi } from '../api'
 import toast from 'react-hot-toast'
+import AuthImage from './AuthImage'
 
 export default function ImageUpload({ value, onChange }) {
   const [uploading, setUploading] = useState(false)
@@ -27,9 +28,10 @@ export default function ImageUpload({ value, onChange }) {
     <div>
       {value ? (
         <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-          <img
+          <AuthImage
             src={value}
             alt="preview"
+            fallback={<div className="upload-preview-fallback">图片暂时无法显示</div>}
             style={{
               width: '100%', maxHeight: '180px', objectFit: 'cover',
               borderRadius: '10px', border: '1px solid var(--border-default)',
@@ -37,11 +39,13 @@ export default function ImageUpload({ value, onChange }) {
             }}
           />
           <button
+            type="button"
             onClick={() => onChange('')}
+            aria-label="移除已上传图片"
             style={{
               position: 'absolute', top: '8px', right: '8px',
               background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
-              width: '28px', height: '28px', display: 'flex', alignItems: 'center',
+              width: '44px', height: '44px', display: 'flex', alignItems: 'center',
               justifyContent: 'center', cursor: 'pointer', color: '#fff',
             }}
           >
@@ -50,7 +54,16 @@ export default function ImageUpload({ value, onChange }) {
         </div>
       ) : (
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => inputRef.current?.click()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              inputRef.current?.click()
+            }
+          }}
+          aria-label="选择要上传的图片"
           style={{
             border: '2px dashed var(--border-strong)',
             borderRadius: '12px', padding: '32px',

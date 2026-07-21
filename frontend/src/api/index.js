@@ -1,4 +1,24 @@
-import api from './axios'
+import api, { rawApi } from './axios'
+
+const unwrapAuthResponse = (response) => response.data?.data ?? response.data
+
+export const authApi = {
+  login: (credentials) => rawApi.post('/auth/login', credentials, { skipAuth: true, silent: true })
+    .then(unwrapAuthResponse),
+  refresh: (refreshToken) => rawApi.post('/auth/refresh', { refreshToken }, { skipAuth: true, silent: true })
+    .then(unwrapAuthResponse),
+  logout: (refreshToken, accessToken) => rawApi.post('/auth/logout', { refreshToken }, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    silent: true,
+  }),
+  me: () => api.get('/auth/me'),
+}
+
+export const memberApi = {
+  getAll: () => api.get('/members'),
+  create: (data) => api.post('/members', data),
+  updateStatus: (id, enabled) => api.patch(`/members/${id}/enabled`, { enabled }),
+}
 
 export const categoryApi = {
   getAll: () => api.get('/categories'),
@@ -38,4 +58,13 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
   }
+}
+
+export const fileApi = {
+  getBlob: (url) => {
+    let path = url
+    if (path.startsWith('/api/v1/')) path = path.slice('/api/v1'.length)
+    if (path.startsWith('/uploads/')) path = `/files/${path.slice('/uploads/'.length)}`
+    return api.get(path, { responseType: 'blob', silent: true })
+  },
 }

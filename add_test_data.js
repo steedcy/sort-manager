@@ -1,4 +1,9 @@
 const http = require('http');
+const accessToken = process.env.SORT_ACCESS_TOKEN;
+
+if (!accessToken) {
+    throw new Error('Set SORT_ACCESS_TOKEN to a current v1.4 access token before running this script.');
+}
 
 const items = [
     { name:"MacBook Pro", description:"工作用电脑", quantity:1, categoryId:1, locationId:4 },
@@ -31,10 +36,11 @@ function addItem(item) {
         const req = http.request({
             hostname: 'localhost',
             port: 8080,
-            path: '/api/items',
+            path: '/api/v1/items',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Length': data.length
             }
         }, (res) => {

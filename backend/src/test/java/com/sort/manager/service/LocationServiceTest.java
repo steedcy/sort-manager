@@ -4,6 +4,7 @@ import com.sort.manager.dto.LocationDTO;
 import com.sort.manager.entity.Location;
 import com.sort.manager.repository.ItemRepository;
 import com.sort.manager.repository.LocationRepository;
+import com.sort.manager.security.CurrentHousehold;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -18,7 +19,9 @@ class LocationServiceTest {
     void updateRejectsSelfAsParent() {
         LocationRepository locationRepository = mock(LocationRepository.class);
         ItemRepository itemRepository = mock(ItemRepository.class);
-        LocationService service = new LocationService(locationRepository, itemRepository);
+        CurrentHousehold currentHousehold = mock(CurrentHousehold.class);
+        when(currentHousehold.requireHouseholdId()).thenReturn(1L);
+        LocationService service = new LocationService(locationRepository, itemRepository, currentHousehold);
 
         Location existing = new Location();
         existing.setId(7L);
@@ -27,7 +30,7 @@ class LocationServiceTest {
         dto.setName("Shelf");
         dto.setParentId(7L);
 
-        when(locationRepository.findById(7L)).thenReturn(Optional.of(existing));
+        when(locationRepository.findByIdAndHouseholdId(7L, 1L)).thenReturn(Optional.of(existing));
 
         assertThrows(IllegalArgumentException.class, () -> service.update(7L, dto));
     }

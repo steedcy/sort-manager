@@ -24,6 +24,15 @@ if "%MISSING%"=="1" (
   exit /b 1
 )
 
+if "%APP_JWT_SECRET%"=="" (
+  echo.
+  echo Missing APP_JWT_SECRET in .env.
+  echo Generate a random secret with at least 32 bytes before starting v1.4.
+  echo.
+  pause
+  exit /b 1
+)
+
 echo ===================================================
 echo           Sort Manager App - One-click Start
 echo ===================================================
@@ -38,7 +47,7 @@ echo.
 echo ---------------------------------------------------
 echo Services started in new windows:
 echo - Frontend URL: http://localhost:5173
-echo - Backend API URL: http://localhost:8080
+echo - Backend API URL: http://localhost:8080/api/v1
 echo ---------------------------------------------------
 echo.
 echo Note: To stop the services, just close the two popup windows.

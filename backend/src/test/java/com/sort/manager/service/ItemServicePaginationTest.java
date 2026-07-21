@@ -8,11 +8,13 @@ import com.sort.manager.entity.Location;
 import com.sort.manager.repository.CategoryRepository;
 import com.sort.manager.repository.ItemRepository;
 import com.sort.manager.repository.LocationRepository;
+import com.sort.manager.security.CurrentHousehold;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -24,6 +26,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 @Transactional
 class ItemServicePaginationTest {
+
+    @MockBean
+    private CurrentHousehold currentHousehold;
 
     @Autowired
     private ItemService itemService;
@@ -44,6 +49,7 @@ class ItemServicePaginationTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.when(currentHousehold.requireHouseholdId()).thenReturn(1L);
         itemRepository.deleteAll();
         categoryRepository.deleteAll();
         locationRepository.deleteAll();
@@ -132,6 +138,7 @@ class ItemServicePaginationTest {
 
     private Category category(String name, String icon, String color) {
         Category category = new Category();
+        category.setHouseholdId(1L);
         category.setName(name);
         category.setIcon(icon);
         category.setColor(color);
@@ -140,12 +147,14 @@ class ItemServicePaginationTest {
 
     private Location location(String name) {
         Location location = new Location();
+        location.setHouseholdId(1L);
         location.setName(name);
         return location;
     }
 
     private Item item(String name, String description, Category category, Location location, int quantity, String purchaseDate, LocalDate expiryDate) {
         Item item = new Item();
+        item.setHouseholdId(1L);
         item.setName(name);
         item.setDescription(description);
         item.setCategory(category);

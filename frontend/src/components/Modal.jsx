@@ -6,7 +6,7 @@ export default function Modal({ title, onClose, onSubmit, loading, children, wid
       <div className="modal" style={{ maxWidth: wide ? '680px' : '520px' }}>
         <div className="modal-header">
           <h2 className="modal-title">{title}</h2>
-          <button className="btn btn-ghost" onClick={onClose} style={{ padding: '6px', borderRadius: '8px' }}>
+          <button className="btn btn-ghost" type="button" onClick={onClose} aria-label={`关闭${title}`} style={{ padding: '6px', borderRadius: '8px' }}>
             <X size={18} />
           </button>
         </div>

@@ -1,7 +1,6 @@
-import { expect, request, test } from '@playwright/test'
-import process from 'node:process'
+import { expect, test } from '@playwright/test'
+import { authenticateApi, loginThroughUi } from './helpers/auth'
 
-const apiBaseUrl = `${(process.env.E2E_API_URL || 'http://127.0.0.1:8080/api').replace(/\/$/, '')}/`
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
 const categoryName = `E2E分类-${runId}`
 const locationName = `E2E位置-${runId}`
@@ -24,7 +23,7 @@ async function create(path, data) {
 
 test.describe.serial('物品管理真实全栈流程', () => {
   test.beforeAll(async () => {
-    api = await request.newContext({ baseURL: apiBaseUrl })
+    ;({ api } = await authenticateApi())
     categoryId = (await create('/categories', { name: categoryName, icon: 'Package', color: '#6366f1' })).id
     locationId = (await create('/locations', { name: locationName, description: 'Playwright fixture' })).id
     const item = await create('/items', {
@@ -37,6 +36,10 @@ test.describe.serial('物品管理真实全栈流程', () => {
       locationId,
     })
     createdItemIds.add(item.id)
+  })
+
+  test.beforeEach(async ({ page }) => {
+    await loginThroughUi(page)
   })
 
   test.afterAll(async () => {

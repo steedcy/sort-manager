@@ -6,6 +6,7 @@ import EmptyState from '../components/EmptyState'
 import ImageUpload from '../components/ImageUpload'
 import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
+import AuthImage from '../components/AuthImage'
 
 const initialForm = { name: '', description: '', parentId: '', imageUrl: '' }
 
@@ -25,7 +26,8 @@ function TreeNode({ node, allLocations, onEdit, onDelete }) {
         <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--bg-tag)',
           display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
           {node.imageUrl
-            ? <img src={node.imageUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'8px' }}/>
+            ? <AuthImage src={node.imageUrl} alt={`${node.name} 位置图片`} fallback={<MapPin size={14} color="#6366f1"/>}
+                style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'8px' }}/>
             : <MapPin size={14} color="#6366f1"/>
           }
         </div>
@@ -40,9 +42,9 @@ function TreeNode({ node, allLocations, onEdit, onDelete }) {
           {node.itemCount} 件
         </span>
         <button className="btn btn-secondary" onClick={e => { e.stopPropagation(); onEdit(node) }}
-          style={{ padding:'5px 8px', fontSize:'12px', marginRight:'4px' }}><Pencil size={12}/></button>
+          aria-label={`编辑位置 ${node.name}`} style={{ padding:'5px 8px', fontSize:'12px', marginRight:'4px' }}><Pencil size={12}/></button>
         <button className="btn btn-danger" onClick={e => { e.stopPropagation(); onDelete(node) }}
-          style={{ padding:'5px 8px' }}><Trash2 size={12}/></button>
+          aria-label={`删除位置 ${node.name}`} style={{ padding:'5px 8px' }}><Trash2 size={12}/></button>
       </div>
       {hasChildren && open && (
         <div className="tree-children">
@@ -120,7 +122,7 @@ export default function Locations() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
         marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
         <div>
-          <h1 className="page-title">📍 收纳位置</h1>
+          <div className="page-title-line"><MapPin size={24} aria-hidden="true" /><h1 className="page-title">收纳位置</h1></div>
           <p className="page-subtitle">共 {allLocations.length} 个位置</p>
         </div>
         <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加位置</button>

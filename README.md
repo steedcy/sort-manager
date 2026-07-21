@@ -4,7 +4,7 @@ Sort Manager is a private daily item storage management system. It helps track h
 
 ## Stack
 
-- Backend: Spring Boot 3.3.5, Spring Web, Spring Data JPA, Flyway, Bean Validation, MySQL
+- Backend: Spring Boot 3.3.5, Spring Security, Spring Web, Spring Data JPA, Flyway, Bean Validation, MySQL
 - Frontend: React 19, Vite 7, React Router, Axios, Tailwind CSS 4, lucide-react, PWA plugin
 - Database: MySQL 8.4
 - Runtime: JDK 21+ or JDK 26 installed locally, compiling Java release 17 bytecode
@@ -22,7 +22,7 @@ The backend uses environment variables:
 
 ```yaml
 DB_URL: jdbc:mysql://localhost:3306/sort_manager
-DB_USERNAME: root
+DB_USERNAME: sort_manager_app
 DB_PASSWORD: <your-password>
 ```
 
@@ -31,7 +31,7 @@ set your own `DB_USERNAME` and `DB_PASSWORD`. `start.bat` loads this file automa
 For manual backend startup, export the values in the current PowerShell session:
 
 ```powershell
-$env:DB_USERNAME = 'root'
+$env:DB_USERNAME = 'sort_manager_app'
 $env:DB_PASSWORD = '<your-password>'
 $env:DB_URL = 'jdbc:mysql://localhost:3306/sort_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false'
 ```
@@ -42,15 +42,35 @@ Backend configuration supports these environment variables:
 
 - `SERVER_PORT`
 - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DRIVER`
-- `JPA_DDL_AUTO`, `JPA_SHOW_SQL`, `HIBERNATE_DIALECT`, `FLYWAY_ENABLED`
+- `JPA_DDL_AUTO`, `JPA_SHOW_SQL`, `HIBERNATE_DIALECT`, `FLYWAY_ENABLED`, `FLYWAY_BASELINE_ON_MIGRATE`
 - `APP_CORS_ALLOWED_ORIGINS`
-- `APP_UPLOAD_PATH`, `APP_UPLOAD_URL_PREFIX`, `APP_LOG_LEVEL`
+- `APP_UPLOAD_PATH`, `APP_LOG_LEVEL`
+- `APP_JWT_SECRET`, `APP_JWT_ACCESS_TTL_SECONDS`, `APP_REFRESH_TTL_DAYS`
+- `APP_LOGIN_MAX_ATTEMPTS`, `APP_LOGIN_BLOCK_SECONDS`, `APP_LOGIN_MAX_TRACKED_ATTEMPTS`
+- `APP_LOGIN_MAX_ATTEMPTS`, `APP_LOGIN_BLOCK_SECONDS`
+- `APP_BOOTSTRAP_USERNAME`, `APP_BOOTSTRAP_PASSWORD`, `APP_BOOTSTRAP_DISPLAY_NAME`, `APP_BOOTSTRAP_HOUSEHOLD_NAME`
 
 ## Setup
 
-Create an empty database and application account. On first backend startup Flyway creates
-the tables and records schema version 2. Existing non-empty v1.2 databases are baselined
-at version 1 and upgraded without recreating business tables.
+Create an empty database and a least-privilege application account. On first backend startup
+Flyway creates schema version 3, including the default household and account tables. Existing
+Flyway migrates the schema to v4; V3 assigns v1.3 data to the default household and V4 aligns
+refresh-token column types with Hibernate. Back up a populated database before
+the upgrade: MySQL DDL is not transactionally rolled back, so recovery means restoring that backup.
+
+v1.4 requires a random JWT secret of at least 32 bytes. Generate one locally and store it only
+in the ignored `.env` file. Also set the `APP_BOOTSTRAP_*` values for the first OWNER. The
+bootstrap password is used only when no application user exists and must never be committed or
+printed in logs. Keep `FLYWAY_BASELINE_ON_MIGRATE=false` for a v1.3 database that already has
+Flyway history; only enable it deliberately when taking over a verified legacy v1.2 database.
+
+```powershell
+$bytes = New-Object byte[] 48
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$rng.Dispose()
+[Convert]::ToBase64String($bytes)
+```
 
 `database/init.sql` is optional sample data and must only be run after Flyway migration:
 
@@ -128,7 +148,7 @@ GitHub Actions runs the same quality gates on pushes and pull requests:
 
 - Backend: `mvn clean test`
 - Frontend: `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run build`
-- Full stack: MySQL 8.4, packaged backend JAR, Vite and three Playwright Chromium flows
+- Full stack: MySQL 8.4, packaged backend JAR, authenticated API readiness, Vite, desktop Chromium flows and a mobile login smoke test
 
 ## Version Control
 
@@ -147,6 +167,8 @@ Implemented modules:
 - Item CRUD, paginated filtering, image upload, batch delete, batch move
 - Category CRUD
 - Hierarchical location CRUD
+- Family OWNER/MEMBER accounts, login, refresh rotation and member enable/disable
+- Household-scoped business data and authenticated image access
 - PWA build output
 - Backend validation and upload safety
 - GitHub Actions CI
@@ -155,12 +177,17 @@ Implemented modules:
 Known next steps:
 
 - Add import/export workflows
+- Add the mobile mini-program client
 - Add Docker Compose for one-command local startup
-- Add authentication, production profiles and deployment automation
+- Add automated encrypted backups and deployment automation
 
 ## API Notes
 
-`GET /api/items` returns paginated data in v1.2.0:
+All business APIs are under `/api/v1` and require `Authorization: Bearer <access-token>`.
+Authenticate with `POST /api/v1/auth/login`; use the one-time refresh token with
+`POST /api/v1/auth/refresh`, and revoke it with authenticated `POST /api/v1/auth/logout`.
+
+`GET /api/v1/items` returns paginated data:
 
 ```json
 {
@@ -179,3 +206,12 @@ Known next steps:
 ```
 
 This replaces the older raw list response for the item list endpoint. Supported query parameters are `keyword`, `categoryId`, `locationId`, `status`, `page`, `size`, `sort`, and `direction`.
+
+## Production deployment
+
+Expose the application only through an HTTPS reverse proxy. Configure an exact
+`APP_CORS_ALLOWED_ORIGINS` list, keep the database port private, run MySQL with a non-root
+application account, and persist both the database and `APP_UPLOAD_PATH` in the backup plan.
+The public readiness endpoint is `/api/v1/health`; business data and files remain authenticated.
+At the HTTPS reverse proxy, set a production Content-Security-Policy equivalent to the frontend policy
+and include `frame-ancestors 'none'`; keep production `connect-src` limited to the deployed origin.

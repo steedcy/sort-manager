@@ -18,6 +18,7 @@ import EmptyState from '../components/EmptyState'
 import ImageUpload from '../components/ImageUpload'
 import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
+import AuthImage from '../components/AuthImage'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -247,7 +248,7 @@ export default function Items() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
         marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="page-title">📦 物品管理</h1>
+          <div className="page-title-line"><Package size={24} aria-hidden="true" /><h1 className="page-title">物品管理</h1></div>
           <p className="page-subtitle">共 {pageData.totalElements} 件物品，当前显示 {items.length} 件</p>
         </div>
         <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加物品</button>
@@ -322,9 +323,9 @@ export default function Items() {
                   {isSelected ? <CheckSquare size={20} color="var(--primary)" /> : <Square size={20} color="var(--text-muted)" />}
                 </button>
                 {item.imageUrl
-                  ? <img src={item.imageUrl} alt={item.name} className="item-image"/>
-                  : <div className="item-image-placeholder"><Package size={32}/></div>
-                }
+                  ? <AuthImage src={item.imageUrl} alt={`${item.name} 图片`} className="item-image"
+                      fallback={<div className="item-image-placeholder"><Package size={32}/></div>} />
+                  : <div className="item-image-placeholder"><Package size={32}/></div>}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                     <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)',

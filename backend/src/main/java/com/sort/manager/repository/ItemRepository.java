@@ -14,16 +14,19 @@ import java.util.List;
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     @Query("SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location " +
-           "WHERE (:keyword IS NULL OR i.name LIKE %:keyword%) " +
+           "WHERE i.householdId = :householdId " +
+           "AND (:keyword IS NULL OR i.name LIKE %:keyword%) " +
            "AND (:categoryId IS NULL OR i.category.id = :categoryId) " +
            "AND (:locationId IS NULL OR i.location.id = :locationId) " +
            "ORDER BY i.createdAt DESC")
-    List<Item> findByFilters(@Param("keyword") String keyword,
+    List<Item> findByFilters(@Param("householdId") Long householdId,
+                              @Param("keyword") String keyword,
                               @Param("categoryId") Long categoryId,
                               @Param("locationId") Long locationId);
 
     @Query(value = "SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location " +
-            "WHERE (:keyword IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "WHERE i.householdId = :householdId " +
+            "AND (:keyword IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(i.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:categoryId IS NULL OR i.category.id = :categoryId) " +
             "AND (:locationId IS NULL OR i.location.id = :locationId) " +
@@ -32,7 +35,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
             "OR (:status = 'expiring' AND i.expiryDate IS NOT NULL AND i.expiryDate >= :today AND i.expiryDate <= :expiringBefore) " +
             "OR (:status = 'normal' AND (i.expiryDate IS NULL OR i.expiryDate > :expiringBefore)))",
             countQuery = "SELECT COUNT(i) FROM Item i " +
-                    "WHERE (:keyword IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                    "WHERE i.householdId = :householdId " +
+                    "AND (:keyword IS NULL OR LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                     "OR LOWER(i.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
                     "AND (:categoryId IS NULL OR i.category.id = :categoryId) " +
                     "AND (:locationId IS NULL OR i.location.id = :locationId) " +
@@ -40,7 +44,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
                     "OR (:status = 'expired' AND i.expiryDate IS NOT NULL AND i.expiryDate < :today) " +
                     "OR (:status = 'expiring' AND i.expiryDate IS NOT NULL AND i.expiryDate >= :today AND i.expiryDate <= :expiringBefore) " +
                     "OR (:status = 'normal' AND (i.expiryDate IS NULL OR i.expiryDate > :expiringBefore)))")
-    Page<Item> searchByFilters(@Param("keyword") String keyword,
+    Page<Item> searchByFilters(@Param("householdId") Long householdId,
+                               @Param("keyword") String keyword,
                                @Param("categoryId") Long categoryId,
                                @Param("locationId") Long locationId,
                                @Param("status") String status,
@@ -48,23 +53,27 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
                                @Param("expiringBefore") java.time.LocalDate expiringBefore,
                                Pageable pageable);
 
-    @Query("SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location ORDER BY i.createdAt DESC")
-    List<Item> findAllWithDetails();
+    @Query("SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location WHERE i.householdId = :householdId ORDER BY i.createdAt DESC")
+    List<Item> findAllWithDetails(@Param("householdId") Long householdId);
 
-    @Query("SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location ORDER BY i.createdAt DESC")
-    List<Item> findTop5ByOrderByCreatedAtDesc(Pageable pageable);
+    @Query("SELECT i FROM Item i LEFT JOIN FETCH i.category LEFT JOIN FETCH i.location WHERE i.householdId = :householdId ORDER BY i.createdAt DESC")
+    List<Item> findRecent(@Param("householdId") Long householdId, Pageable pageable);
 
-    long countByCategoryId(Long categoryId);
+    long countByHouseholdIdAndCategoryId(Long householdId, Long categoryId);
 
-    long countByLocationId(Long locationId);
+    long countByHouseholdIdAndLocationId(Long householdId, Long locationId);
 
-    long countByCategoryIsNull();
+    long countByHouseholdIdAndCategoryIsNull(Long householdId);
 
-    List<Item> findByLocationId(Long locationId);
+    List<Item> findByHouseholdIdAndLocationId(Long householdId, Long locationId);
 
-    @Query("SELECT i.category.id, COUNT(i) FROM Item i WHERE i.category IS NOT NULL GROUP BY i.category.id")
-    List<Object[]> countByCategory();
+    @Query("SELECT i.category.id, COUNT(i) FROM Item i WHERE i.householdId = :householdId AND i.category IS NOT NULL GROUP BY i.category.id")
+    List<Object[]> countByCategory(@Param("householdId") Long householdId);
 
-    @Query("SELECT i.location.id, COUNT(i) FROM Item i WHERE i.location IS NOT NULL GROUP BY i.location.id")
-    List<Object[]> countByLocation();
+    @Query("SELECT i.location.id, COUNT(i) FROM Item i WHERE i.householdId = :householdId AND i.location IS NOT NULL GROUP BY i.location.id")
+    List<Object[]> countByLocation(@Param("householdId") Long householdId);
+
+    java.util.Optional<Item> findByIdAndHouseholdId(Long id, Long householdId);
+
+    long countByHouseholdId(Long householdId);
 }

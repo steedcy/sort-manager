@@ -1,4 +1,9 @@
 const http = require('http');
+const accessToken = process.env.SORT_ACCESS_TOKEN;
+
+if (!accessToken) {
+    throw new Error('Set SORT_ACCESS_TOKEN to a current v1.4 access token before running this script.');
+}
 
 const newCategories = [
     { name: '美妆护肤', icon: 'Sparkles', color: '#f472b6' },
@@ -23,7 +28,8 @@ function requestData(path, method, data = null) {
             path: path,
             method: method,
             headers: {
-                'Content-Type': 'application/json; charset=utf-8'
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${accessToken}`
             }
         };
         
@@ -53,14 +59,14 @@ function requestData(path, method, data = null) {
 async function run() {
     console.log('Adding new categories...');
     for (const cat of newCategories) {
-        await requestData('/api/categories', 'POST', cat);
+        await requestData('/api/v1/categories', 'POST', cat);
         console.log('Added category:', cat.name);
     }
 
     console.log('Adding top level locations...');
-    const loc11 = await requestData('/api/locations', 'POST', newLocations[0]);
-    const loc12 = await requestData('/api/locations', 'POST', newLocations[1]);
-    const loc13 = await requestData('/api/locations', 'POST', newLocations[2]);
+    const loc11 = await requestData('/api/v1/locations', 'POST', newLocations[0]);
+    const loc12 = await requestData('/api/v1/locations', 'POST', newLocations[1]);
+    const loc13 = await requestData('/api/v1/locations', 'POST', newLocations[2]);
     
     const bathroomId = loc11.data.id;
     const balconyId = loc12.data.id;
@@ -79,7 +85,7 @@ async function run() {
     ];
 
     for (const loc of subLocations) {
-        await requestData('/api/locations', 'POST', loc);
+        await requestData('/api/v1/locations', 'POST', loc);
         console.log('Added location:', loc.name);
     }
     

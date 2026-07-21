@@ -11,10 +11,14 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    @Query("SELECT c FROM Category c ORDER BY c.createdAt ASC")
-    List<Category> findAllOrdered();
+    @Query("SELECT c FROM Category c WHERE c.householdId = :householdId ORDER BY c.createdAt ASC")
+    List<Category> findAllOrdered(Long householdId);
 
-    boolean existsByName(String name);
+    boolean existsByHouseholdIdAndName(Long householdId, String name);
 
-    Optional<Category> findByName(String name);
+    Optional<Category> findByHouseholdIdAndName(Long householdId, String name);
+
+    Optional<Category> findByIdAndHouseholdId(Long id, Long householdId);
+
+    long countByHouseholdId(Long householdId);
 }

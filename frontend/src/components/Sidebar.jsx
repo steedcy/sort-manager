@@ -1,81 +1,62 @@
-import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Package, MapPin, Tag, ChevronRight, Box, Sun, Moon } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { Box, LayoutDashboard, LogOut, MapPin, Moon, Package, Sun, Tag, Users } from 'lucide-react'
 import { useThemeContext } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
-const navItems = [
-  { label: '仪表盘',  path: '/',           icon: LayoutDashboard },
-  { label: '物品管理', path: '/items',       icon: Package },
-  { label: '收纳位置', path: '/locations',   icon: MapPin },
-  { label: '分类管理', path: '/categories',  icon: Tag },
+const primaryItems = [
+  { label: '仪表盘', path: '/', icon: LayoutDashboard },
+  { label: '物品管理', path: '/items', icon: Package },
+  { label: '收纳位置', path: '/locations', icon: MapPin },
+  { label: '分类管理', path: '/categories', icon: Tag },
 ]
 
 export default function Sidebar() {
-  const location = useLocation()
   const { toggle, isDark } = useThemeContext()
+  const { user, logout } = useAuth()
+  const navItems = user.role === 'OWNER'
+    ? [...primaryItems, { label: '家庭成员', path: '/members', icon: Users }]
+    : primaryItems
 
   return (
-    <aside className="sidebar">
-      {/* Logo */}
+    <aside className="sidebar" aria-label="主要导航">
       <div className="sidebar-logo">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="logo-icon">
-            <Box size={20} color="#fff" />
-          </div>
+        <div className="sidebar-brand-row">
+          <span className="logo-icon" aria-hidden="true"><Box size={20} /></span>
           <div>
-            <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-              收纳管家
-            </div>
-            <div style={{ fontSize: '11px', color: '#6366f1' }}>Storage Manager</div>
+            <div className="sidebar-brand-name">收纳管家</div>
+            <div className="sidebar-brand-caption">家庭物品簿</div>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="sidebar-nav">
-        <div className="nav-section-label">主菜单</div>
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = item.path === '/'
-            ? location.pathname === '/'
-            : location.pathname.startsWith(item.path)
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={`nav-item ${isActive ? 'active' : ''}`}
-              style={{ textDecoration: 'none' }}
-            >
-              <Icon className="nav-icon" size={18} />
-              <span style={{ flex: 1 }}>{item.label}</span>
-              {isActive && <ChevronRight size={14} style={{ opacity: 0.5 }} />}
-            </NavLink>
-          )
-        })}
+        <div className="nav-section-label">家庭空间</div>
+        {navItems.map(({ label, path, icon: Icon }) => (
+          <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <Icon className="nav-icon" size={18} aria-hidden="true" />
+            <span>{label}</span>
+          </NavLink>
+        ))}
       </nav>
 
-      {/* Footer: theme toggle + version */}
-      <div style={{
-        padding: '12px 16px 16px',
-        borderTop: '1px solid var(--logo-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '8px',
-      }}>
-        <span style={{ fontSize: '11px', color: 'var(--sidebar-footer)' }}>v1.2.0</span>
-
-        {/* Theme Toggle */}
-        <button
-          className="btn-theme"
-          onClick={toggle}
-          title={isDark ? '切换到浅色模式' : '切换到深色模式'}
-          style={{ flexShrink: 0 }}
-        >
-          {isDark
-            ? <Sun size={15} />
-            : <Moon size={15} />
-          }
-        </button>
+      <div className="sidebar-account">
+        <div className="account-summary">
+          <span className="account-avatar" aria-hidden="true">{user.displayName?.slice(0, 1) || '家'}</span>
+          <div>
+            <strong>{user.displayName}</strong>
+            <span>{user.householdName || '默认家庭'} · {user.role === 'OWNER' ? '管理员' : '成员'}</span>
+          </div>
+        </div>
+        <div className="sidebar-account-actions">
+          <button className="btn-theme" type="button" onClick={toggle}
+            aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}>
+            {isDark ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+          <button className="sidebar-logout" type="button" onClick={logout}>
+            <LogOut size={17} aria-hidden="true" />退出登录
+          </button>
+        </div>
+        <span className="sidebar-version">v1.4.0</span>
       </div>
     </aside>
   )

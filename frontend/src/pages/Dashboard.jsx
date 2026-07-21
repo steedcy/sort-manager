@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { dashboardApi } from '../api'
 import { Package, MapPin, Tag, TrendingUp, Clock, DollarSign, CalendarOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import AuthImage from '../components/AuthImage'
 
-const StatCard = ({ icon: Icon, label, value, color, bgColor, onClick }) => (
-  <div className="card stat-card" style={{ cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
+const StatCard = ({ icon: Icon, label, value, color, bgColor, onClick }) => {
+  const CardElement = onClick ? 'button' : 'div'
+  return (
+  <CardElement className={`card stat-card ${onClick ? 'stat-card-button' : ''}`} type={onClick ? 'button' : undefined} onClick={onClick}>
     <div className="stat-icon" style={{ background: bgColor }}>
       <Icon size={22} color={color} />
     </div>
@@ -14,8 +17,9 @@ const StatCard = ({ icon: Icon, label, value, color, bgColor, onClick }) => (
       </div>
       <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>{label}</div>
     </div>
-  </div>
-)
+  </CardElement>
+  )
+}
 
 export default function Dashboard() {
   const [data, setData] = useState(null)
@@ -39,7 +43,7 @@ export default function Dashboard() {
   return (
     <div className="page-content">
       <div style={{ marginBottom: '28px' }}>
-        <h1 className="page-title">📦 收纳总览</h1>
+        <div className="page-title-line"><Package size={24} aria-hidden="true" /><h1 className="page-title">收纳总览</h1></div>
         <p className="page-subtitle">掌握所有物品的存放状态</p>
       </div>
 
@@ -65,7 +69,7 @@ export default function Dashboard() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
               {data.expiringItems.map(item => (
-                <div key={item.id}
+                <button key={item.id} type="button" className="dashboard-list-button"
                   onClick={() => navigate('/items')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '12px',
@@ -88,7 +92,7 @@ export default function Dashboard() {
                     background: item.status === '过期' ? '#fee2e2' : '#ffedd5',
                     color: item.status === '过期' ? '#dc2626' : '#ea580c',
                   }}>{item.status}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -103,7 +107,7 @@ export default function Dashboard() {
           {data?.recentItems?.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {data.recentItems.slice(0, 6).map(item => (
-                <div key={item.id}
+                <button key={item.id} type="button" className="dashboard-list-button"
                   onClick={() => navigate('/items')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '12px',
@@ -121,7 +125,9 @@ export default function Dashboard() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {item.imageUrl
-                      ? <img src={item.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      ? <AuthImage src={item.imageUrl} alt={`${item.name} 图片`}
+                          fallback={<Package size={16} color={item.categoryColor || '#6366f1'} />}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                       : <Package size={16} color={item.categoryColor || '#6366f1'} />
                     }
                   </div>
@@ -141,7 +147,7 @@ export default function Dashboard() {
                       color: item.categoryColor || '#6366f1',
                     }}>{item.categoryName}</span>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           ) : (

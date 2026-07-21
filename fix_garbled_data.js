@@ -1,4 +1,9 @@
 const http = require('http');
+const accessToken = process.env.SORT_ACCESS_TOKEN;
+
+if (!accessToken) {
+    throw new Error('Set SORT_ACCESS_TOKEN to a current v1.4 access token before running this script.');
+}
 
 const categoryFixes = {
     1: { name: '电子产品' },
@@ -43,7 +48,8 @@ function requestData(path, method, data = null) {
             path: path,
             method: method,
             headers: {
-                'Content-Type': 'application/json; charset=utf-8'
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${accessToken}`
             }
         };
         
@@ -72,24 +78,24 @@ function requestData(path, method, data = null) {
 
 async function run() {
     // Categories
-    let res = await requestData('/api/categories', 'GET');
+    let res = await requestData('/api/v1/categories', 'GET');
     let categories = res.data;
     for (let c of categories) {
         if (c.name && c.name.includes('?')) {
             let fix = categoryFixes[c.id];
             if (fix) {
                 c.name = fix.name;
-                await requestData('/api/categories/' + c.id, 'PUT', c);
+                await requestData('/api/v1/categories/' + c.id, 'PUT', c);
                 console.log('Fixed category:', c.id, fix.name);
             } else {
-                await requestData('/api/categories/' + c.id, 'DELETE');
+                await requestData('/api/v1/categories/' + c.id, 'DELETE');
                 console.log('Deleted unknown category:', c.id);
             }
         }
     }
 
     // Locations
-    res = await requestData('/api/locations', 'GET');
+    res = await requestData('/api/v1/locations', 'GET');
     let locations = res.data;
     for (let l of locations) {
         if (l.name && l.name.includes('?')) {
@@ -97,33 +103,46 @@ async function run() {
             if (fix) {
                 l.name = fix.name;
                 l.description = fix.description;
-                await requestData('/api/locations/' + l.id, 'PUT', l);
+                await requestData('/api/v1/locations/' + l.id, 'PUT', l);
                 console.log('Fixed location:', l.id, fix.name);
             } else {
-                await requestData('/api/locations/' + l.id, 'DELETE');
+                await requestData('/api/v1/locations/' + l.id, 'DELETE');
                 console.log('Deleted unknown location:', l.id);
             }
         }
     }
 
     // Items
-    res = await requestData('/api/items', 'GET');
-    let items = res.data;
+    let items = await fetchAllItems();
     for (let i of items) {
         if (i.name && i.name.includes('?')) {
             let fix = itemFixes[i.id];
             if (fix) {
                 i.name = fix.name;
                 i.description = fix.description;
-                await requestData('/api/items/' + i.id, 'PUT', i);
+                await requestData('/api/v1/items/' + i.id, 'PUT', i);
                 console.log('Fixed item:', i.id, fix.name);
             } else {
-                await requestData('/api/items/' + i.id, 'DELETE');
+                await requestData('/api/v1/items/' + i.id, 'DELETE');
                 console.log('Deleted unknown item:', i.id);
             }
         }
     }
     
     console.log('All ?? issues fixed!');
+}
+
+async function fetchAllItems() {
+    const items = [];
+    let page = 0;
+    let totalPages = 1;
+    while (page < totalPages) {
+        const res = await requestData(`/api/v1/items?page=${page}&size=100`, 'GET');
+        const pageData = res.data || {};
+        items.push(...(pageData.content || []));
+        totalPages = pageData.totalPages || 0;
+        page += 1;
+    }
+    return items;
 }
 run();

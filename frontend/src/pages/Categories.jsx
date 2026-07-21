@@ -65,7 +65,7 @@ export default function Categories() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
         marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
         <div>
-          <h1 className="page-title">🏷️ 分类管理</h1>
+          <div className="page-title-line"><Tag size={24} aria-hidden="true" /><h1 className="page-title">分类管理</h1></div>
           <p className="page-subtitle">共 {categories.length} 个分类</p>
         </div>
         <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加分类</button>
@@ -105,7 +105,7 @@ export default function Categories() {
                   style={{ flex:1, fontSize:'12px', padding:'7px' }}>
                   <Pencil size={12}/> 编辑
                 </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(cat)} style={{ padding:'7px 10px' }}>
+                <button className="btn btn-danger" onClick={() => handleDelete(cat)} style={{ padding:'7px 10px' }} aria-label={`删除分类 ${cat.name}`}>
                   <Trash2 size={12}/>
                 </button>
               </div>

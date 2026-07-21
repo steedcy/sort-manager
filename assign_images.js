@@ -1,4 +1,9 @@
 const http = require('http');
+const accessToken = process.env.SORT_ACCESS_TOKEN;
+
+if (!accessToken) {
+    throw new Error('Set SORT_ACCESS_TOKEN to a current v1.4 access token before running this script.');
+}
 
 const itemSpecificImages = {
     'MacBook Pro': '/images/macbook.png',
@@ -39,7 +44,8 @@ function requestData(path, method, data = null) {
             path: path,
             method: method,
             headers: {
-                'Content-Type': 'application/json; charset=utf-8'
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${accessToken}`
             }
         };
         
@@ -67,19 +73,32 @@ function requestData(path, method, data = null) {
 }
 
 async function run() {
-    let res = await requestData('/api/items', 'GET');
-    let items = res.data;
+    let items = await fetchAllItems();
     console.log(`Found ${items.length} items to update...`);
 
     for (let item of items) {
         let imageUrl = itemSpecificImages[item.name];
         if (imageUrl) {
             item.imageUrl = imageUrl;
-            await requestData('/api/items/' + item.id, 'PUT', item);
+            await requestData('/api/v1/items/' + item.id, 'PUT', item);
             console.log(`Updated item: ${item.name} -> ${imageUrl}`);
         }
     }
     console.log('All specific items updated with tailored images!');
+}
+
+async function fetchAllItems() {
+    const items = [];
+    let page = 0;
+    let totalPages = 1;
+    while (page < totalPages) {
+        const res = await requestData(`/api/v1/items?page=${page}&size=100`, 'GET');
+        const pageData = res.data || {};
+        items.push(...(pageData.content || []));
+        totalPages = pageData.totalPages || 0;
+        page += 1;
+    }
+    return items;
 }
 
 run();

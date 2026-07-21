@@ -25,6 +25,7 @@ Thumbs.db
 
 # Local development worktrees
 .worktrees/
+.codex/
 
 # IDE metadata
 .idea/
