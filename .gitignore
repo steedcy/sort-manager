@@ -16,7 +16,8 @@ backend/src/main/resources/static/uploads/*
 # Logs and caches
 *.log
 *.smbak
-scratch/v16-*
+scratch/
+.desktop-capture.png
 .DS_Store
 Thumbs.db
 

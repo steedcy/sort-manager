@@ -10,6 +10,19 @@ Sort Manager is a private daily item storage management system. It helps track h
 - Database: MySQL 8.4
 - Runtime: JDK 21+ or JDK 26 installed locally, compiling Java release 17 bytecode
 
+## Repository layout
+
+- `backend/`: Spring Boot API, Flyway migrations, and backend tests
+- `frontend/`: React web application, unit tests, and Playwright end-to-end tests
+- `miniapp/`: native WeChat Mini Program and contract tests
+- `database/`: optional sample data loaded after Flyway migrations
+- `ops/`: backup, restore, and operational verification scripts
+- `docs/`: architecture decisions, release notes, plans, reviews, and project history
+
+Generated output, local credentials, runtime uploads, scratch files, and local database backups
+are intentionally excluded from Git. Keep reusable maintenance utilities under `ops/`; do not
+commit one-off scripts containing environment-specific identifiers or access tokens.
+
 ## Requirements
 
 - JDK 17 or newer with `JAVA_HOME` configured (the project compiles Java 17 bytecode)
