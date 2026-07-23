@@ -199,9 +199,9 @@ export default function Items() {
   }
 
   const handleDelete = async (item) => {
-    if (!window.confirm(`确认删除「${item.name}」？`)) return
+    if (!window.confirm(`确认将「${item.name}」移入回收站？之后可由家庭管理员恢复。`)) return
     await itemApi.delete(item.id)
-    toast.success('删除成功')
+    toast.success('已移入回收站')
     load()
   }
 
@@ -215,15 +215,15 @@ export default function Items() {
   }
 
   const handleBatchDelete = async () => {
-    if (!window.confirm(`确认删除选中的 ${selectedItems.size} 件物品？`)) return
+    if (!window.confirm(`确认将选中的 ${selectedItems.size} 件物品移入回收站？`)) return
     setLoading(true)
     try {
       await Promise.all(Array.from(selectedItems).map(id => itemApi.delete(id)))
-      toast.success('批量删除成功')
+      toast.success('选中物品已移入回收站')
       setSelectedItems(new Set())
       load()
     } catch {
-      toast.error('部分删除失败')
+      toast.error('部分物品未能移入回收站')
       setLoading(false)
     }
   }
@@ -376,7 +376,7 @@ export default function Items() {
                     style={{ flex: 1, padding: '7px', fontSize: '12px' }}>
                     <Pencil size={13}/> 编辑
                   </button>
-                  <button className="btn btn-danger" onClick={() => handleDelete(item)} style={{ padding: '7px 10px' }} aria-label={`删除 ${item.name}`}>
+                  <button className="btn btn-danger" onClick={() => handleDelete(item)} style={{ padding: '7px 10px' }} aria-label={`将 ${item.name} 移入回收站`} title="移入回收站">
                     <Trash2 size={13}/>
                   </button>
                 </div>
@@ -493,7 +493,7 @@ export default function Items() {
               <MapPin size={16}/> 批量移动
             </button>
             <button className="btn btn-danger" onClick={handleBatchDelete}>
-              <Trash2 size={16}/> 批量删除
+              <Trash2 size={16}/> 移入回收站
             </button>
           </div>
         </div>

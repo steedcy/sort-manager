@@ -26,7 +26,8 @@ class ItemServiceTest {
         LocationRepository locationRepository = mock(LocationRepository.class);
         CurrentHousehold currentHousehold = mock(CurrentHousehold.class);
         when(currentHousehold.requireHouseholdId()).thenReturn(1L);
-        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository, currentHousehold);
+        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository, currentHousehold,
+                mock(AuditEventService.class));
 
         ItemDTO dto = validItem();
         dto.setCategoryId(99L);
@@ -43,7 +44,8 @@ class ItemServiceTest {
         LocationRepository locationRepository = mock(LocationRepository.class);
         CurrentHousehold currentHousehold = mock(CurrentHousehold.class);
         when(currentHousehold.requireHouseholdId()).thenReturn(1L);
-        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository, currentHousehold);
+        ItemService service = new ItemService(itemRepository, categoryRepository, locationRepository, currentHousehold,
+                mock(AuditEventService.class));
 
         ItemDTO dto = validItem();
         dto.setQuantity(0);

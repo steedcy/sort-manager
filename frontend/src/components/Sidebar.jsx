@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Moon, Package, Sun, Tag, Users } from 'lucide-react'
+import { Activity, ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Moon, Package, Sun, Tag, Users } from 'lucide-react'
 import { useThemeContext } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -15,7 +15,9 @@ export default function Sidebar() {
   const { toggle, isDark } = useThemeContext()
   const { user, logout } = useAuth()
   const navItems = user.role === 'OWNER'
-    ? [...primaryItems, { label: '家庭成员', path: '/members', icon: Users }]
+    ? [...primaryItems,
+        { label: '家庭成员', path: '/members', icon: Users },
+        { label: '家庭运营', path: '/operations', icon: Activity }]
     : primaryItems
 
   return (
@@ -57,7 +59,7 @@ export default function Sidebar() {
             <LogOut size={17} aria-hidden="true" />退出登录
           </button>
         </div>
-        <span className="sidebar-version">v1.5.0</span>
+        <span className="sidebar-version">v1.6.0</span>
       </div>
     </aside>
   )

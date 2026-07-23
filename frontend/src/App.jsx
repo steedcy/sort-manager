@@ -12,6 +12,7 @@ import Categories from './pages/Categories'
 import Login from './pages/Login'
 import Members from './pages/Members'
 import BulkItems from './pages/BulkItems'
+import Operations from './pages/Operations'
 
 export default function App() {
   const themeState = useTheme()
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="categories" element={<Categories />} />
                 <Route element={<ProtectedRoute role="OWNER" />}>
                   <Route path="members" element={<Members />} />
+                  <Route path="operations" element={<Operations />} />
                 </Route>
                 <Route path="*" element={<Dashboard />} />
               </Route>

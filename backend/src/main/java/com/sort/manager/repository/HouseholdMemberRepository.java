@@ -24,5 +24,7 @@ public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember
 
     long countByHouseholdIdAndRoleAndUserEnabledTrue(Long householdId, HouseholdRole role);
 
+    long countByHouseholdIdAndUserEnabledTrue(Long householdId);
+
     boolean existsByUserIdAndHouseholdIdAndUserEnabledTrue(Long userId, Long householdId);
 }

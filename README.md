@@ -49,12 +49,14 @@ Backend configuration supports these environment variables:
 - `APP_JWT_SECRET`, `APP_JWT_ACCESS_TTL_SECONDS`, `APP_REFRESH_TTL_DAYS`
 - `APP_LOGIN_MAX_ATTEMPTS`, `APP_LOGIN_BLOCK_SECONDS`, `APP_LOGIN_MAX_TRACKED_ATTEMPTS`
 - `APP_BOOTSTRAP_USERNAME`, `APP_BOOTSTRAP_PASSWORD`, `APP_BOOTSTRAP_DISPLAY_NAME`, `APP_BOOTSTRAP_HOUSEHOLD_NAME`
+- `APP_BACKUP_STATUS_PATH`, `APP_BACKUP_STALE_AFTER_HOURS`
 
 ## Setup
 
 Create an empty database and a least-privilege application account. On first backend startup
-Flyway migrates the schema to v4; V3 assigns v1.3 data to the default household and V4 aligns
-refresh-token column types with Hibernate. Back up a populated database before
+Flyway migrates the schema to v5; V3 assigns v1.3 data to the default household, V4 aligns
+refresh-token column types with Hibernate, and V5 adds soft deletion plus append-only audit data.
+Back up a populated database before
 the upgrade: MySQL DDL is not transactionally rolled back, so recovery means restoring that backup.
 
 v1.4 requires a random JWT secret of at least 32 bytes. Generate one locally and store it only
@@ -144,6 +146,13 @@ npm test
 npm run check
 ```
 
+Encrypted backup and recovery scripts:
+
+```powershell
+./ops/tests/syntax-check.ps1
+./ops/tests/backup-roundtrip.tests.ps1
+```
+
 Combined frontend verification:
 
 ```powershell
@@ -157,6 +166,7 @@ GitHub Actions runs the same quality gates on pushes and pull requests:
 - Frontend: `npm ci`, `npm audit --audit-level=high`, `npm run lint`, `npm run build`
 - Full stack: MySQL 8.4, packaged backend JAR, authenticated API readiness, Vite, desktop Chromium flows and a mobile login smoke test
 - Mini program: request/auth utility tests and JavaScript syntax checks
+- Operations: PowerShell syntax, encrypted round-trip, tamper rejection and verify-only recovery
 
 ## Version Control
 
@@ -180,6 +190,8 @@ Implemented modules:
 - Household-scoped business data and authenticated image access
 - PWA build output
 - Native WeChat Mini Program foundation for login, dashboard, search and quick entry
+- Item recycle bin, household activity audit, member session revocation and OWNER operations summary
+- Authenticated encrypted MySQL/upload backups with verify-first recovery tooling
 - Backend validation and upload safety
 - GitHub Actions CI
 - Portable environment configuration via `.env.example`
@@ -189,13 +201,14 @@ Known next steps:
 - Add export, `.xlsx`, barcode/OCR and batch image workflows
 - Add WeChat login, offline cache and Mini Program automated UI tests
 - Add Docker Compose for one-command local startup
-- Add automated encrypted backups and deployment automation
+- Add off-host backup replication, retention automation and restore drills
 
 ## API Notes
 
 All business APIs are under `/api/v1` and require `Authorization: Bearer <access-token>`.
 Authenticate with `POST /api/v1/auth/login`; use the one-time refresh token with
-`POST /api/v1/auth/refresh`, and revoke it with authenticated `POST /api/v1/auth/logout`.
+`POST /api/v1/auth/refresh`, and revoke it with `POST /api/v1/auth/logout`. Logout accepts the
+refresh token even when the access token has expired.
 
 `GET /api/v1/items` returns paginated data:
 
@@ -228,6 +241,9 @@ address, then import `miniapp/` into WeChat Developer Tools with your own AppID.
 must be registered as a request domain in the WeChat public platform. See
 [`miniapp/README.md`](miniapp/README.md) for local checks and security notes.
 
+OWNER accounts also see a compact household protection summary on the profile page. MEMBER accounts
+do not request the protected operations endpoint, and the Mini Program keeps the existing four tabs.
+
 ## Production deployment
 
 Expose the application only through an HTTPS reverse proxy. Configure an exact
@@ -236,3 +252,6 @@ application account, and persist both the database and `APP_UPLOAD_PATH` in the 
 The public readiness endpoint is `/api/v1/health`; business data and files remain authenticated.
 At the HTTPS reverse proxy, set a production Content-Security-Policy equivalent to the frontend policy
 and include `frame-ancestors 'none'`; keep production `connect-src` limited to the deployed origin.
+Configure encrypted backups and rehearse verify-first recovery using
+[`ops/README.md`](ops/README.md). Keep archive storage, the passphrase secret, and the non-sensitive
+status JSON in separate locations.

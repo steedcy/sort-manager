@@ -70,10 +70,68 @@ test.describe.serial('家庭账号与安全访问', () => {
     await api.dispose()
   })
 
-  test('移动端可以完成登录并访问看板 @mobile', async ({ page }) => {
+  test('OWNER 可撤销指定成员的全部会话', async ({ page }) => {
+    const { api } = await authenticateApi()
+    const membersResponse = await api.get('members')
+    expect(membersResponse.ok(), await membersResponse.text()).toBeTruthy()
+    const member = (await membersResponse.json()).data.find((entry) => entry.username === memberUsername)
+    expect(member).toBeTruthy()
+    const memberId = member.id ?? member.userId
+    const enableResponse = await api.patch(`members/${memberId}/enabled`, { data: { enabled: true } })
+    expect(enableResponse.ok(), await enableResponse.text()).toBeTruthy()
+
+    const { session, api: memberApi } = await authenticateApi(memberUsername, e2ePassword)
+    await memberApi.dispose()
+    await loginThroughUi(page)
+    await page.goto('/members')
+    page.once('dialog', (dialog) => dialog.accept())
+    const memberRow = page.getByRole('row').filter({ hasText: memberDisplayName })
+    const revokeResponsePromise = page.waitForResponse((response) => response.url().endsWith(`/api/v1/members/${memberId}/revoke-sessions`))
+    await memberRow.getByRole('button', { name: '撤销会话' }).click()
+    expect((await revokeResponsePromise).ok()).toBeTruthy()
+
+    const replayResponse = await page.request.post(`${apiBaseUrl}auth/refresh`, { data: { refreshToken: session.refreshToken } })
+    expect(replayResponse.status()).toBe(401)
+    const disableResponse = await api.patch(`members/${memberId}/enabled`, { data: { enabled: false } })
+    expect(disableResponse.ok(), await disableResponse.text()).toBeTruthy()
+    await api.dispose()
+  })
+
+  test('移动端可以完成登录、访问看板并撤销成员会话 @mobile', async ({ page }) => {
+    const { api } = await authenticateApi()
+    let membersResponse = await api.get('members')
+    expect(membersResponse.ok(), await membersResponse.text()).toBeTruthy()
+    let member = (await membersResponse.json()).data.find((entry) => entry.username === memberUsername)
+    if (!member) {
+      const createResponse = await api.post('members', { data: {
+        username: memberUsername,
+        displayName: memberDisplayName,
+        password: e2ePassword,
+        role: 'MEMBER',
+      } })
+      expect(createResponse.ok(), await createResponse.text()).toBeTruthy()
+      member = (await createResponse.json()).data
+    }
+    const memberId = member.id ?? member.userId
+    const enableResponse = await api.patch(`members/${memberId}/enabled`, { data: { enabled: true } })
+    expect(enableResponse.ok(), await enableResponse.text()).toBeTruthy()
+    const { session, api: memberApi } = await authenticateApi(memberUsername, e2ePassword)
+    await memberApi.dispose()
+
     await loginThroughUi(page)
     await expect(page.getByRole('heading', { name: /收纳总览/ })).toBeVisible()
+    await page.goto('/members')
+    page.once('dialog', (dialog) => dialog.accept())
+    const memberRow = page.locator('.member-card').filter({ hasText: memberDisplayName })
+    const revokeResponsePromise = page.waitForResponse((response) => response.url().endsWith(`/api/v1/members/${memberId}/revoke-sessions`))
+    await memberRow.getByRole('button', { name: '撤销会话' }).click()
+    expect((await revokeResponsePromise).ok()).toBeTruthy()
+    const replayResponse = await page.request.post(`${apiBaseUrl}auth/refresh`, { data: { refreshToken: session.refreshToken } })
+    expect(replayResponse.status()).toBe(401)
     const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(horizontalOverflow).toBeLessThanOrEqual(1)
+    const disableResponse = await api.patch(`members/${memberId}/enabled`, { data: { enabled: false } })
+    expect(disableResponse.ok(), await disableResponse.text()).toBeTruthy()
+    await api.dispose()
   })
 })

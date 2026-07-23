@@ -41,7 +41,8 @@ class ItemBatchServiceTest {
         locationRepository = mock(LocationRepository.class);
         CurrentHousehold currentHousehold = mock(CurrentHousehold.class);
         when(currentHousehold.requireHouseholdId()).thenReturn(7L);
-        service = new ItemBatchService(itemRepository, categoryRepository, locationRepository, currentHousehold);
+        service = new ItemBatchService(itemRepository, categoryRepository, locationRepository, currentHousehold,
+                mock(AuditEventService.class));
     }
 
     @Test

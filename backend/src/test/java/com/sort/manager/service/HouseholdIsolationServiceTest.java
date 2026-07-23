@@ -52,7 +52,8 @@ class HouseholdIsolationServiceTest {
         ItemRepository items = mock(ItemRepository.class);
         CategoryRepository categories = mock(CategoryRepository.class);
         LocationRepository locations = mock(LocationRepository.class);
-        ItemService service = new ItemService(items, categories, locations, currentHousehold(42L));
+        ItemService service = new ItemService(items, categories, locations, currentHousehold(42L),
+                mock(AuditEventService.class));
 
         ItemDTO request = new ItemDTO();
         request.setName("牛奶");
@@ -70,7 +71,8 @@ class HouseholdIsolationServiceTest {
         ItemRepository items = mock(ItemRepository.class);
         CategoryRepository categories = mock(CategoryRepository.class);
         LocationRepository locations = mock(LocationRepository.class);
-        ItemService service = new ItemService(items, categories, locations, currentHousehold(42L));
+        ItemService service = new ItemService(items, categories, locations, currentHousehold(42L),
+                mock(AuditEventService.class));
         when(items.findByIdAndHouseholdId(8L, 42L)).thenReturn(Optional.empty());
 
         assertThrows(java.util.NoSuchElementException.class, () -> service.findById(8L));

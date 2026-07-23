@@ -24,4 +24,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     @Modifying
     @Query("UPDATE RefreshToken t SET t.revokedAt = :revokedAt WHERE t.user.id = :userId AND t.revokedAt IS NULL")
     int revokeAllForUser(@Param("userId") Long userId, @Param("revokedAt") Instant revokedAt);
+
+    @Query("SELECT COUNT(t) FROM RefreshToken t WHERE t.household.id = :householdId " +
+            "AND t.user.enabled = true AND t.revokedAt IS NULL AND t.expiresAt > :now")
+    long countActiveByHouseholdId(@Param("householdId") Long householdId, @Param("now") Instant now);
 }

@@ -1,6 +1,7 @@
 const api = require('../../utils/api')
 const { REFRESH_TOKEN_KEY, USER_KEY, getStorage, requireSession } = require('../../utils/auth')
 const requestClient = require('../../utils/request')
+const { formatProtectionSummary, shouldLoadOperations } = require('../../utils/operations')
 
 function displayUser(user) {
   if (!user) return null
@@ -17,6 +18,9 @@ Page({
     loading: true,
     error: '',
     loggingOut: false,
+    protection: null,
+    protectionLoading: false,
+    protectionError: '',
   },
   onLoad() {
     this.setData({ user: displayUser(getStorage().get(USER_KEY)) })
@@ -32,11 +36,24 @@ Page({
     try {
       const user = await api.me()
       getStorage().set(USER_KEY, user)
-      this.setData({ user: displayUser(user) })
+      this.setData({ user: displayUser(user), loading: false })
+      if (shouldLoadOperations(user)) await this.loadProtectionSummary()
+      else this.setData({ protection: null, protectionError: '' })
     } catch (error) {
       this.setData({ error: error.message || '账号信息更新失败' })
     } finally {
       this.setData({ loading: false })
+    }
+  },
+  async loadProtectionSummary() {
+    this.setData({ protectionLoading: true, protectionError: '' })
+    try {
+      const summary = await api.operationsSummary()
+      this.setData({ protection: formatProtectionSummary(summary) })
+    } catch (error) {
+      this.setData({ protection: null, protectionError: error.message || '家庭保护状态暂时不可用' })
+    } finally {
+      this.setData({ protectionLoading: false })
     }
   },
   confirmLogout() {

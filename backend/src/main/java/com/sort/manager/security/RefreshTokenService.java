@@ -84,8 +84,8 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public void revokeAllForUser(Long userId) {
-        tokenRepository.revokeAllForUser(userId, clock.instant());
+    public int revokeAllForUser(Long userId) {
+        return tokenRepository.revokeAllForUser(userId, clock.instant());
     }
 
     private IssuedRefreshToken issue(AppUser user, Household household, String family) {

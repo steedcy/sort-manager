@@ -19,7 +19,7 @@ class FlywayMigrationTest {
         String url = "jdbc:h2:mem:flyway_fresh;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
 
         Flyway flyway = flyway(url, false);
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
 
         try (Connection connection = DriverManager.getConnection(url, "sa", "");
              Statement statement = connection.createStatement()) {
@@ -34,6 +34,10 @@ class FlywayMigrationTest {
             assertThat(countWhereHouseholdMissing(statement, "item")).isZero();
             assertThat(indexColumns(connection, "category", "uk_category_household_name"))
                     .containsExactlyInAnyOrder("household_id", "name");
+            assertThat(columnNames(connection, "item")).contains("deleted_at", "deleted_by_user_id");
+            assertThat(columnNames(connection, "audit_event")).contains(
+                    "household_id", "actor_user_id", "action", "entity_type", "entity_id",
+                    "entity_name", "summary", "created_at");
         }
     }
 
@@ -53,7 +57,7 @@ class FlywayMigrationTest {
         }
 
         Flyway baselineUpgrade = flyway(url, true);
-        assertThat(baselineUpgrade.migrate().migrationsExecuted).isEqualTo(3);
+        assertThat(baselineUpgrade.migrate().migrationsExecuted).isEqualTo(4);
 
         try (Connection connection = DriverManager.getConnection(url, "sa", "");
              Statement statement = connection.createStatement()) {
@@ -104,6 +108,16 @@ class FlywayMigrationTest {
                 if (indexName.equalsIgnoreCase(indexes.getString("INDEX_NAME"))) {
                     columns.add(indexes.getString("COLUMN_NAME").toLowerCase());
                 }
+            }
+        }
+        return columns;
+    }
+
+    private Set<String> columnNames(Connection connection, String table) throws Exception {
+        Set<String> columns = new HashSet<>();
+        try (ResultSet resultSet = connection.getMetaData().getColumns(null, null, table, null)) {
+            while (resultSet.next()) {
+                columns.add(resultSet.getString("COLUMN_NAME").toLowerCase());
             }
         }
         return columns;

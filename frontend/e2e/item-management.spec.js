@@ -49,9 +49,20 @@ test.describe.serial('物品管理真实全栈流程', () => {
       const body = await search.json()
       for (const item of body.data?.content || []) createdItemIds.add(item.id)
     }
-    for (const id of createdItemIds) await api.delete(`items/${id}`)
-    if (categoryId) await api.delete(`categories/${categoryId}`)
-    if (locationId) await api.delete(`locations/${locationId}`)
+    for (const id of createdItemIds) {
+      const softDelete = await api.delete(`items/${id}`)
+      expect([200, 404]).toContain(softDelete.status())
+      const permanentDelete = await api.delete(`operations/recycle-bin/${id}`)
+      expect(permanentDelete.ok(), await permanentDelete.text()).toBeTruthy()
+    }
+    if (categoryId) {
+      const response = await api.delete(`categories/${categoryId}`)
+      expect(response.ok(), await response.text()).toBeTruthy()
+    }
+    if (locationId) {
+      const response = await api.delete(`locations/${locationId}`)
+      expect(response.ok(), await response.text()).toBeTruthy()
+    }
     await api.dispose()
   })
 
@@ -70,13 +81,19 @@ test.describe.serial('物品管理真实全栈流程', () => {
     await page.getByLabel('数量 *').fill('2')
     await page.getByLabel('单价 (元) *').fill('12.50')
     await page.getByLabel('存放位置 *').selectOption(String(locationId))
+    const createResponsePromise = page.waitForResponse((response) =>
+      response.url().endsWith('/api/v1/items') && response.request().method() === 'POST')
     await page.getByRole('button', { name: '保存' }).click()
+    const createResponse = await createResponsePromise
+    const createBody = await createResponse.json()
+    expect(createResponse.ok(), JSON.stringify(createBody)).toBeTruthy()
+    createdItemIds.add(createBody.data.id)
 
     await page.getByLabel('搜索物品名称或描述').fill(uiItemName)
     const card = page.getByTestId('item-card').filter({ hasText: uiItemName })
     await expect(card).toBeVisible()
     page.once('dialog', dialog => dialog.accept())
-    await card.getByRole('button', { name: `删除 ${uiItemName}` }).click()
+    await card.getByRole('button', { name: `将 ${uiItemName} 移入回收站` }).click()
     await expect(card).toHaveCount(0)
   })
 

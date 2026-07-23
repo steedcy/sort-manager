@@ -2,6 +2,7 @@ package com.sort.manager.service;
 
 import com.sort.manager.dto.ItemDTO;
 import com.sort.manager.dto.PageResponse;
+import com.sort.manager.dto.RecycleBinItemDTO;
 import com.sort.manager.entity.Category;
 import com.sort.manager.entity.Item;
 import com.sort.manager.entity.Location;
@@ -46,6 +47,7 @@ public class ItemService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final CurrentHousehold currentHousehold;
+    private final AuditEventService auditEventService;
 
     @Transactional(readOnly = true)
     public List<ItemDTO> findAll(String keyword, Long categoryId, Long locationId) {
@@ -97,23 +99,34 @@ public class ItemService {
     @Transactional
     public ItemDTO create(ItemDTO dto) {
         Item item = new Item();
-        item.setHouseholdId(currentHousehold.requireHouseholdId());
+        Long householdId = currentHousehold.requireHouseholdId();
+        Long actorUserId = currentHousehold.requireUserId();
+        item.setHouseholdId(householdId);
         fillItem(item, dto);
-        return toDTO(itemRepository.save(item));
+        Item saved = itemRepository.save(item);
+        auditEventService.record(householdId, actorUserId, "ITEM_CREATED", "ITEM", saved.getId(),
+                saved.getName(), "新建物品");
+        return toDTO(saved);
     }
 
     @Transactional
     public ItemDTO update(Long id, ItemDTO dto) {
-        Item item = itemRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
+        Long householdId = currentHousehold.requireHouseholdId();
+        Long actorUserId = currentHousehold.requireUserId();
+        Item item = itemRepository.findActiveByIdAndHouseholdId(id, householdId)
                 .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         fillItem(item, dto);
-        return toDTO(itemRepository.save(item));
+        Item saved = itemRepository.save(item);
+        auditEventService.record(householdId, actorUserId, "ITEM_UPDATED", "ITEM", id,
+                saved.getName(), "更新物品信息");
+        return toDTO(saved);
     }
 
     @Transactional
     public ItemDTO move(Long id, Long locationId) {
         Long householdId = currentHousehold.requireHouseholdId();
-        Item item = itemRepository.findByIdAndHouseholdId(id, householdId)
+        Long actorUserId = currentHousehold.requireUserId();
+        Item item = itemRepository.findActiveByIdAndHouseholdId(id, householdId)
                 .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
         if (locationId != null) {
             Location location = locationRepository.findByIdAndHouseholdId(locationId, householdId)
@@ -122,19 +135,72 @@ public class ItemService {
         } else {
             item.setLocation(null);
         }
-        return toDTO(itemRepository.save(item));
+        Item saved = itemRepository.save(item);
+        auditEventService.record(householdId, actorUserId, "ITEM_MOVED", "ITEM", id,
+                saved.getName(), locationId == null ? "清除存放位置" : "移动到其他位置");
+        return toDTO(saved);
     }
 
     @Transactional
     public void delete(Long id) {
-        Item item = itemRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
+        Long householdId = currentHousehold.requireHouseholdId();
+        Long actorUserId = currentHousehold.requireUserId();
+        Item item = itemRepository.findActiveByIdAndHouseholdId(id, householdId)
                 .orElseThrow(() -> new NoSuchElementException("Item not found: " + id));
+        item.setDeletedAt(java.time.LocalDateTime.now());
+        item.setDeletedByUserId(actorUserId);
+        itemRepository.save(item);
+        auditEventService.record(householdId, actorUserId, "ITEM_DELETED", "ITEM", id,
+                item.getName(), "移入回收站");
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<RecycleBinItemDTO> findRecycleBin(Integer page, Integer size) {
+        int pageNumber = page == null || page < 0 ? 0 : page;
+        int pageSize = size == null || size < 1 ? 20 : Math.min(size, MAX_PAGE_SIZE);
+        Page<Item> result = itemRepository.findDeletedByHouseholdId(
+                currentHousehold.requireHouseholdId(),
+                PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "deletedAt")));
+        return PageResponse.from(result, result.getContent().stream().map(this::toRecycleBinDTO).toList());
+    }
+
+    @Transactional
+    public ItemDTO restore(Long id) {
+        Long householdId = currentHousehold.requireHouseholdId();
+        Long actorUserId = currentHousehold.requireUserId();
+        Item item = itemRepository.findDeletedByIdAndHouseholdId(id, householdId)
+                .orElseThrow(() -> new NoSuchElementException("Deleted item not found: " + id));
+        item.setDeletedAt(null);
+        item.setDeletedByUserId(null);
+        Item restored = itemRepository.save(item);
+        auditEventService.record(householdId, actorUserId, "ITEM_RESTORED", "ITEM", id,
+                restored.getName(), "从回收站恢复");
+        return toDTO(restored);
+    }
+
+    @Transactional
+    public void permanentDelete(Long id) {
+        Long householdId = currentHousehold.requireHouseholdId();
+        Long actorUserId = currentHousehold.requireUserId();
+        Item item = itemRepository.findDeletedByIdAndHouseholdId(id, householdId)
+                .orElseThrow(() -> new NoSuchElementException("Deleted item not found: " + id));
+        String name = item.getName();
         itemRepository.delete(item);
+        auditEventService.record(householdId, actorUserId, "ITEM_PERMANENTLY_DELETED", "ITEM", id,
+                name, "永久删除且不可恢复");
     }
 
     @Transactional(readOnly = true)
     public List<ItemDTO> findRecent(int limit) {
         return itemRepository.findRecent(currentHousehold.requireHouseholdId(), PageRequest.of(0, limit))
+                .stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ItemDTO> findExpiring(java.time.LocalDate threshold, int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 100));
+        return itemRepository.findExpiring(currentHousehold.requireHouseholdId(), threshold,
+                        PageRequest.of(0, safeLimit))
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -268,6 +334,18 @@ public class ItemService {
         if (item.getCreatedAt() != null) dto.setCreatedAt(item.getCreatedAt().toString());
         if (item.getUpdatedAt() != null) dto.setUpdatedAt(item.getUpdatedAt().toString());
         return dto;
+    }
+
+    private RecycleBinItemDTO toRecycleBinDTO(Item item) {
+        return new RecycleBinItemDTO(
+                item.getId(),
+                item.getName(),
+                item.getQuantity(),
+                item.getCategory() == null ? null : item.getCategory().getName(),
+                item.getLocation() == null ? null : item.getLocation().getName(),
+                item.getDeletedAt() == null ? null : item.getDeletedAt().toString(),
+                item.getDeletedByUserId(),
+                item.getDeletedByUser() == null ? null : item.getDeletedByUser().getDisplayName());
     }
 
     private String buildLocationPath(Location location) {

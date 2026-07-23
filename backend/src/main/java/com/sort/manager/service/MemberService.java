@@ -30,6 +30,7 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final CurrentHousehold currentHousehold;
+    private final AuditEventService auditEventService;
 
     @Transactional(readOnly = true)
     public List<MemberDTO> findAll() {
@@ -57,7 +58,10 @@ public class MemberService {
         member.setHousehold(household);
         member.setUser(user);
         member.setRole(request.role());
-        return toDTO(memberRepository.save(member));
+        HouseholdMember saved = memberRepository.save(member);
+        auditEventService.record(household.getId(), currentHousehold.requireUserId(), "MEMBER_CREATED", "MEMBER",
+                saved.getId(), user.getDisplayName(), "新增家庭成员，角色为 " + saved.getRole().name());
+        return toDTO(saved);
     }
 
     @Transactional
@@ -76,7 +80,22 @@ public class MemberService {
         if (!enabled) {
             refreshTokenService.revokeAllForUser(member.getUser().getId());
         }
+        auditEventService.record(householdId, currentHousehold.requireUserId(),
+                enabled ? "MEMBER_ENABLED" : "MEMBER_DISABLED", "MEMBER", memberId,
+                member.getUser().getDisplayName(), enabled ? "启用家庭成员" : "停用家庭成员并撤销全部会话");
         return toDTO(member);
+    }
+
+    @Transactional
+    public int revokeSessions(Long memberId) {
+        Long householdId = currentHousehold.requireHouseholdId();
+        Long actorUserId = currentHousehold.requireUserId();
+        HouseholdMember member = memberRepository.findByIdAndHouseholdId(memberId, householdId)
+                .orElseThrow(() -> new NoSuchElementException("Household member not found"));
+        int revoked = refreshTokenService.revokeAllForUser(member.getUser().getId());
+        auditEventService.record(householdId, actorUserId, "MEMBER_SESSIONS_REVOKED", "MEMBER", memberId,
+                member.getUser().getDisplayName(), "撤销 " + revoked + " 个活动会话");
+        return revoked;
     }
 
     private MemberDTO toDTO(HouseholdMember member) {

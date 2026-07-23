@@ -1,6 +1,6 @@
 # Sort Manager Frontend
 
-React 19 + Vite 7 frontend for Sort Manager.
+React 19 + Vite 7 frontend for Sort Manager. Current version: v1.6.0.
 
 ```powershell
 npm ci
@@ -33,7 +33,11 @@ npm run test:e2e
 ```
 
 The suite logs in through both the UI and API, covers authenticated item management, OWNER
-member management, logout, v1.5 bulk preview/atomic commit, and 375 px mobile workflows.
+member and session management, logout, bulk preview/atomic commit, recycle-bin recovery and
+permanent deletion, and 375 px mobile workflows. Credentials and tokens are not written to test
+output.
+
 The bulk workspace is available at `/items/bulk`; it accepts pasted Excel/WPS tables or UTF-8
-CSV files and keeps an in-tab draft until commit or logout. Credentials and tokens are not
-written to test output.
+CSV files and keeps an in-tab draft until commit or logout. The OWNER-only `/operations` workspace
+shows the household protection summary, paginated activity tape, and recycle bin. On mobile it is
+opened from the dashboard protection card instead of adding another bottom-navigation item.

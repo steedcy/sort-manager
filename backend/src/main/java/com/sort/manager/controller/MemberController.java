@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/members")
@@ -38,5 +39,10 @@ public class MemberController {
     public ApiResponse<MemberDTO> setEnabled(@PathVariable Long id,
                                              @Valid @RequestBody UpdateMemberEnabledRequest request) {
         return ApiResponse.ok("成员状态已更新", memberService.setEnabled(id, request.enabled()));
+    }
+
+    @PostMapping("/{id}/revoke-sessions")
+    public ApiResponse<Map<String, Integer>> revokeSessions(@PathVariable Long id) {
+        return ApiResponse.ok("Member sessions revoked", Map.of("revokedCount", memberService.revokeSessions(id)));
     }
 }

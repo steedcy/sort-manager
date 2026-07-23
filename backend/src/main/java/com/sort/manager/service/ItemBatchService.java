@@ -41,6 +41,7 @@ public class ItemBatchService {
     private final CategoryRepository categoryRepository;
     private final LocationRepository locationRepository;
     private final CurrentHousehold currentHousehold;
+    private final AuditEventService auditEventService;
 
     @Transactional
     public ItemBatchResponse process(ItemBatchRequest request) {
@@ -67,6 +68,8 @@ public class ItemBatchService {
         }
 
         List<Item> saved = itemRepository.saveAll(candidates);
+        auditEventService.record(householdId, currentHousehold.requireUserId(), "ITEM_BATCH_CREATED", "ITEM_BATCH",
+                null, saved.size() + " 件物品", "一次批量录入 " + saved.size() + " 件物品");
         List<ItemDTO> createdItems = saved.stream().map(this::toDTO).toList();
         return new ItemBatchResponse(rows.size(), validCount, saved.size(), rowResults, createdItems);
     }

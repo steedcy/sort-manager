@@ -26,23 +26,24 @@ public class LocationService {
 
     @Transactional(readOnly = true)
     public List<LocationDTO> findAll() {
-        return locationRepository.findAllOrdered(currentHousehold.requireHouseholdId()).stream()
-                .map(l -> toDTO(l, false))
+        return locationRepository.findAllWithActiveItemCounts(currentHousehold.requireHouseholdId()).stream()
+                .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<LocationDTO> findTree() {
-        List<Location> locations = locationRepository.findAllOrdered(currentHousehold.requireHouseholdId());
+        List<LocationRepository.LocationCountView> locations =
+                locationRepository.findAllWithActiveItemCounts(currentHousehold.requireHouseholdId());
         Map<Long, LocationDTO> byId = new LinkedHashMap<>();
-        locations.forEach(location -> byId.put(location.getId(), toDTO(location, false)));
+        locations.forEach(location -> byId.put(location.getId(), toDTO(location)));
         List<LocationDTO> roots = new ArrayList<>();
         locations.forEach(location -> {
             LocationDTO dto = byId.get(location.getId());
-            if (location.getParent() == null || !byId.containsKey(location.getParent().getId())) {
+            if (location.getParentId() == null || !byId.containsKey(location.getParentId())) {
                 roots.add(dto);
             } else {
-                byId.get(location.getParent().getId()).getChildren().add(dto);
+                byId.get(location.getParentId()).getChildren().add(dto);
             }
         });
         return roots;
@@ -95,8 +96,15 @@ public class LocationService {
 
     @Transactional
     public void delete(Long id) {
-        Location location = locationRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
+        Long householdId = currentHousehold.requireHouseholdId();
+        Location location = locationRepository.findByIdAndHouseholdId(id, householdId)
                 .orElseThrow(() -> new NoSuchElementException("Location not found: " + id));
+        if (locationRepository.existsByHouseholdIdAndParentId(householdId, id)) {
+            throw new IllegalArgumentException("该位置仍包含子位置，请先移动或删除子位置");
+        }
+        if (itemRepository.existsAnyByHouseholdIdAndLocationId(householdId, id)) {
+            throw new IllegalArgumentException("该位置仍被物品或回收站记录使用，请先移动或永久删除相关物品");
+        }
         locationRepository.delete(location);
     }
 
@@ -130,6 +138,21 @@ public class LocationService {
         } else {
             dto.setChildren(new ArrayList<>());
         }
+        return dto;
+    }
+
+    private LocationDTO toDTO(LocationRepository.LocationCountView view) {
+        LocationDTO dto = new LocationDTO();
+        dto.setId(view.getId());
+        dto.setName(view.getName());
+        dto.setDescription(view.getDescription());
+        dto.setImageUrl(view.getImageUrl());
+        dto.setParentId(view.getParentId());
+        dto.setParentName(view.getParentName());
+        dto.setItemCount(view.getItemCount());
+        dto.setChildren(new ArrayList<>());
+        if (view.getCreatedAt() != null) dto.setCreatedAt(view.getCreatedAt().toString());
+        if (view.getUpdatedAt() != null) dto.setUpdatedAt(view.getUpdatedAt().toString());
         return dto;
     }
 }

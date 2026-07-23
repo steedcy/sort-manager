@@ -15,6 +15,7 @@ const api = {
   createItem: (item) => client.request({ path: '/items', method: 'POST', data: item }),
   categories: () => client.request({ path: '/categories' }),
   locations: () => client.request({ path: '/locations' }),
+  operationsSummary: () => client.request({ path: '/operations/summary' }),
 }
 
 module.exports = api

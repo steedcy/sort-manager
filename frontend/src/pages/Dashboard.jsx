@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { dashboardApi } from '../api'
-import { Package, MapPin, Tag, TrendingUp, Clock, DollarSign, CalendarOff } from 'lucide-react'
+import { Package, MapPin, Tag, TrendingUp, Clock, DollarSign, CalendarOff, ShieldCheck, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import AuthImage from '../components/AuthImage'
+import { useAuth } from '../context/AuthContext'
 
 const StatCard = ({ icon: Icon, label, value, color, bgColor, onClick }) => {
   const CardElement = onClick ? 'button' : 'div'
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   useEffect(() => {
     dashboardApi.getStats()
@@ -58,6 +60,14 @@ export default function Dashboard() {
         <StatCard icon={Tag}          label="物品分类"   value={data?.totalCategories}
           color="#8b5cf6" bgColor="rgba(139,92,246,0.15)"  onClick={() => navigate('/categories')} />
       </div>
+
+      {user.role === 'OWNER' && (
+        <button className="dashboard-operations-entry" type="button" onClick={() => navigate('/operations')}>
+          <span className="dashboard-operations-icon" aria-hidden="true"><ShieldCheck size={21} /></span>
+          <span><strong>家庭数据保护</strong><small>查看备份状态、操作记录和回收站</small></span>
+          <ArrowRight size={19} aria-hidden="true" />
+        </button>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         {/* Expiring Items (New Panel) */}

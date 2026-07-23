@@ -18,6 +18,15 @@ export const memberApi = {
   getAll: () => api.get('/members'),
   create: (data) => api.post('/members', data),
   updateStatus: (id, enabled) => api.patch(`/members/${id}/enabled`, { enabled }),
+  revokeSessions: (id) => api.post(`/members/${id}/revoke-sessions`),
+}
+
+export const operationsApi = {
+  getSummary: () => api.get('/operations/summary', { silent: true }),
+  getActivity: (params) => api.get('/operations/activity', { params, silent: true }),
+  getRecycleBin: (params) => api.get('/operations/recycle-bin', { params, silent: true }),
+  restoreItem: (id) => api.post(`/operations/recycle-bin/${id}/restore`, null, { silent: true }),
+  permanentlyDeleteItem: (id) => api.delete(`/operations/recycle-bin/${id}`, { silent: true }),
 }
 
 export const categoryApi = {

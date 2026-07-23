@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff, Plus, ShieldCheck, UserRound, UserRoundCheck, UserRoundX, X } from 'lucide-react'
+import { Eye, EyeOff, LogOut, Plus, ShieldCheck, UserRound, UserRoundCheck, UserRoundX, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { memberApi } from '../api'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +17,7 @@ export default function Members() {
   const [showPassword, setShowPassword] = useState(false)
   const [saving, setSaving] = useState(false)
   const [updatingId, setUpdatingId] = useState(null)
+  const [revokingId, setRevokingId] = useState(null)
   const [form, setForm] = useState(initialForm)
   const [formError, setFormError] = useState('')
   const [loadError, setLoadError] = useState('')
@@ -101,6 +102,20 @@ export default function Members() {
       toast.error('成员状态更新失败，请稍后重试。')
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  const revokeSessions = async (member) => {
+    const memberId = member.id ?? member.userId
+    if (!window.confirm(`确认撤销「${member.displayName}」的全部会话？该成员需要重新登录。`)) return
+    setRevokingId(memberId)
+    try {
+      await memberApi.revokeSessions(memberId)
+      toast.success('该成员的全部会话已撤销')
+    } catch {
+      toast.error('会话撤销失败，请稍后重试。')
+    } finally {
+      setRevokingId(null)
     }
   }
 
@@ -199,13 +214,13 @@ export default function Members() {
               <tbody>
                 {members.map((member) => {
                   const memberId = member.id
-                  const isCurrent = member.userId === user.id
+                  const isCurrent = (member.userId ?? member.id) === user.id
                   return (
                     <tr key={memberId}>
                       <td><MemberIdentity member={member} isCurrent={isCurrent} /></td>
                       <td><span className={`role-badge role-${member.role?.toLowerCase()}`}>{roleLabel(member.role)}</span></td>
                       <td><StatusLabel enabled={member.enabled} /></td>
-                      <td><StatusButton member={member} isCurrent={isCurrent} busy={updatingId === memberId} onClick={() => updateStatus(member)} /></td>
+                      <td><div className="member-row-actions"><SessionButton member={member} isCurrent={isCurrent} busy={revokingId === memberId} onClick={() => revokeSessions(member)} /><StatusButton member={member} isCurrent={isCurrent} busy={updatingId === memberId} onClick={() => updateStatus(member)} /></div></td>
                     </tr>
                   )
                 })}
@@ -216,7 +231,7 @@ export default function Members() {
           <div className="member-cards">
             {members.map((member) => {
               const memberId = member.id
-              const isCurrent = member.userId === user.id
+              const isCurrent = (member.userId ?? member.id) === user.id
               return (
                 <article className="member-card" key={memberId}>
                   <MemberIdentity member={member} isCurrent={isCurrent} />
@@ -224,7 +239,7 @@ export default function Members() {
                     <span className={`role-badge role-${member.role?.toLowerCase()}`}>{roleLabel(member.role)}</span>
                     <StatusLabel enabled={member.enabled} />
                   </div>
-                  <StatusButton member={member} isCurrent={isCurrent} busy={updatingId === memberId} onClick={() => updateStatus(member)} />
+                  <div className="member-row-actions"><SessionButton member={member} isCurrent={isCurrent} busy={revokingId === memberId} onClick={() => revokeSessions(member)} /><StatusButton member={member} isCurrent={isCurrent} busy={updatingId === memberId} onClick={() => updateStatus(member)} /></div>
                 </article>
               )
             })}
@@ -260,6 +275,16 @@ function StatusButton({ member, isCurrent, busy, onClick }) {
       title={isCurrent ? '不能停用当前账号' : undefined}>
       {busy ? <span className="button-spinner" aria-hidden="true" /> : null}
       {busy ? '处理中…' : member.enabled ? '停用账号' : '启用账号'}
+    </button>
+  )
+}
+
+function SessionButton({ member, isCurrent, busy, onClick }) {
+  return (
+    <button className="btn btn-danger member-session-button" type="button" disabled={isCurrent || busy || !member.enabled} onClick={onClick}
+      title={isCurrent ? '不能在这里撤销当前账号会话' : !member.enabled ? '账号已停用' : undefined}>
+      {busy ? <span className="button-spinner" aria-hidden="true" /> : <LogOut size={16} />}
+      {busy ? '撤销中…' : '撤销会话'}
     </button>
   )
 }

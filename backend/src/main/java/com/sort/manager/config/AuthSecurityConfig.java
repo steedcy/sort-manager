@@ -50,6 +50,7 @@ public class AuthSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/health", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout").permitAll()
+                        .requestMatchers("/api/v1/operations/**").hasRole("OWNER")
                         .requestMatchers("/api/v1/members/**").hasRole("OWNER")
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll())

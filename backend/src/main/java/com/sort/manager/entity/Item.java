@@ -50,6 +50,16 @@ public class Item {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by_user_id")
+    private Long deletedByUserId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deleted_by_user_id", insertable = false, updatable = false)
+    private AppUser deletedByUser;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

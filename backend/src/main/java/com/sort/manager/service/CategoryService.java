@@ -23,7 +23,7 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<CategoryDTO> findAll() {
-        return categoryRepository.findAllOrdered(currentHousehold.requireHouseholdId()).stream()
+        return categoryRepository.findAllWithActiveItemCounts(currentHousehold.requireHouseholdId()).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -71,8 +71,12 @@ public class CategoryService {
 
     @Transactional
     public void delete(Long id) {
-        Category category = categoryRepository.findByIdAndHouseholdId(id, currentHousehold.requireHouseholdId())
+        Long householdId = currentHousehold.requireHouseholdId();
+        Category category = categoryRepository.findByIdAndHouseholdId(id, householdId)
                 .orElseThrow(() -> new NoSuchElementException("Category not found: " + id));
+        if (itemRepository.existsAnyByHouseholdIdAndCategoryId(householdId, id)) {
+            throw new IllegalArgumentException("该分类仍被物品或回收站记录使用，请先调整或永久删除相关物品");
+        }
         categoryRepository.delete(category);
     }
 
@@ -91,6 +95,18 @@ public class CategoryService {
         dto.setItemCount(itemRepository.countByHouseholdIdAndCategoryId(c.getHouseholdId(), c.getId()));
         if (c.getCreatedAt() != null) dto.setCreatedAt(c.getCreatedAt().toString());
         if (c.getUpdatedAt() != null) dto.setUpdatedAt(c.getUpdatedAt().toString());
+        return dto;
+    }
+
+    private CategoryDTO toDTO(CategoryRepository.CategoryCountView view) {
+        CategoryDTO dto = new CategoryDTO();
+        dto.setId(view.getId());
+        dto.setName(view.getName());
+        dto.setIcon(view.getIcon());
+        dto.setColor(view.getColor());
+        dto.setItemCount(view.getItemCount());
+        if (view.getCreatedAt() != null) dto.setCreatedAt(view.getCreatedAt().toString());
+        if (view.getUpdatedAt() != null) dto.setUpdatedAt(view.getUpdatedAt().toString());
         return dto;
     }
 }

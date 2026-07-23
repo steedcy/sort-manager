@@ -23,6 +23,35 @@
       <view class="status-pill">{{user.roleLabel}}</view>
     </view>
 
+    <block wx:if="{{user.role === 'OWNER'}}">
+      <view class="section-heading">家庭数据保护</view>
+      <view class="protection-card" aria-label="家庭数据保护摘要">
+        <view class="protection-card__rail"></view>
+        <view class="protection-card__body">
+          <view wx:if="{{protectionLoading}}" class="protection-empty">正在核对备份与会话状态…</view>
+          <view wx:elif="{{protection}}">
+            <view class="backup-state backup-state--{{protection.backup.tone}}">
+              <view class="backup-state__mark"></view>
+              <view>
+                <view class="backup-state__label">{{protection.backup.label}}</view>
+                <view class="backup-state__detail">{{protection.backup.detail}}</view>
+              </view>
+            </view>
+            <view class="protection-metrics">
+              <view class="protection-metric"><text>{{protection.recycleBinItems}}</text><view>回收站</view></view>
+              <view class="protection-metric"><text>{{protection.activeSessions}}</text><view>活动会话</view></view>
+              <view class="protection-metric"><text>{{protection.activityLast7Days}}</text><view>近 7 天操作</view></view>
+            </view>
+          </view>
+          <view wx:else class="protection-empty" role="alert">
+            <view>{{protectionError || '尚未取得家庭保护状态'}}</view>
+            <button class="button-text protection-retry" bindtap="loadProtectionSummary">重新加载</button>
+          </view>
+          <view class="protection-note">完整回收站、运行日志与成员会话管理请在 PC 端打开“家庭运行日志”。</view>
+        </view>
+      </view>
+    </block>
+
     <view wx:if="{{error}}" class="inline-notice" role="alert">{{error}}，当前显示上次同步的信息。</view>
 
     <view class="section-heading">家庭归属</view>
@@ -43,6 +72,6 @@
     <button class="button-danger logout-button" loading="{{loggingOut}}" disabled="{{loggingOut}}" bindtap="confirmLogout">
       {{loggingOut ? '正在退出' : '退出登录'}}
     </button>
-    <view class="version-text">Sort Manager Mini Program · v1.5.0</view>
+    <view class="version-text">Sort Manager Mini Program · v1.6.0</view>
   </block>
 </view>
