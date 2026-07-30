@@ -4,11 +4,11 @@ export default function EmptyState({ icon: Icon = Package, title = '暂无数据
   return (
     <div className="empty-state">
       <div className="empty-state-icon">
-        <Icon size={28} />
+        <Icon size={28} aria-hidden="true" />
       </div>
-      <div>
-        <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--empty-title)', marginBottom: '4px' }}>{title}</div>
-        {desc && <div style={{ fontSize: '13px', color: 'var(--text-subtle)' }}>{desc}</div>}
+      <div className="empty-state__copy">
+        <strong className="empty-state__title">{title}</strong>
+        {desc && <p className="empty-state__description">{desc}</p>}
       </div>
       {action && action}
     </div>

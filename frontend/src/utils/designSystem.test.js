@@ -60,3 +60,19 @@ test('page and component JSX avoids presentational inline styles', () => {
   const violations = files.filter((file) => /style=\{\{/.test(read(file)))
   assert.deepEqual(violations, [])
 })
+
+test('shared UI primitives expose the standard component contract', () => {
+  const exports = read('src/components/ui/index.js')
+  for (const component of [
+    'Button',
+    'Card',
+    'FormField',
+    'PageHeader',
+    'Pagination',
+    'Skeleton',
+    'StatusBadge',
+    'Toolbar',
+  ]) {
+    assert.match(exports, new RegExp(`export \\{ default as ${component} \\}`))
+  }
+})
