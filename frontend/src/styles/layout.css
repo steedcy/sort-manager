@@ -1,0 +1,13 @@
+.app-shell, .app-layout { min-height: 100dvh; background: var(--color-canvas); }
+.page-content {
+  width: min(100%, var(--content-width));
+  margin: 0 auto;
+  padding: clamp(var(--space-4), 3vw, var(--space-8));
+}
+.page-heading-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-4); margin-bottom: var(--space-6);
+}
+@media (max-width: 767px) {
+  .page-heading-row { flex-direction: column; }
+}

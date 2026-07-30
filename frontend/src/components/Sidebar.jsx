@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Activity, ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Moon, Package, Sun, Tag, Users } from 'lucide-react'
-import { useThemeContext } from '../context/ThemeContext'
+import { Activity, ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Package, Tag, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const primaryItems = [
@@ -12,7 +11,6 @@ const primaryItems = [
 ]
 
 export default function Sidebar() {
-  const { toggle, isDark } = useThemeContext()
   const { user, logout } = useAuth()
   const navItems = user.role === 'OWNER'
     ? [...primaryItems,
@@ -51,10 +49,6 @@ export default function Sidebar() {
           </div>
         </div>
         <div className="sidebar-account-actions">
-          <button className="btn-theme" type="button" onClick={toggle}
-            aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}>
-            {isDark ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
           <button className="sidebar-logout" type="button" onClick={logout}>
             <LogOut size={17} aria-hidden="true" />退出登录
           </button>

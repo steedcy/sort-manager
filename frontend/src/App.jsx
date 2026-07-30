@@ -1,7 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { useTheme } from './hooks/useTheme'
-import { ThemeContext } from './context/ThemeContext'
 import AuthProvider from './context/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppShell from './components/AppShell'
@@ -15,11 +13,8 @@ import BulkItems from './pages/BulkItems'
 import Operations from './pages/Operations'
 
 export default function App() {
-  const themeState = useTheme()
-
   return (
-    <ThemeContext.Provider value={themeState}>
-      <BrowserRouter>
+    <BrowserRouter>
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -38,17 +33,8 @@ export default function App() {
               </Route>
             </Route>
           </Routes>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              className: 'app-toast',
-              duration: 4000,
-              success: { iconTheme: { primary: '#16a34a', secondary: themeState.isDark ? '#1e1e35' : '#fff' } },
-              error: { iconTheme: { primary: '#dc2626', secondary: themeState.isDark ? '#1e1e35' : '#fff' } },
-            }}
-          />
+          <Toaster position="top-right" toastOptions={{ className: 'app-toast', duration: 4000 }} />
         </AuthProvider>
       </BrowserRouter>
-    </ThemeContext.Provider>
   )
 }
