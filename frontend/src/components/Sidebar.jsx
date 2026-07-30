@@ -19,7 +19,7 @@ export default function Sidebar() {
     : primaryItems
 
   return (
-    <aside className="sidebar" aria-label="主要导航">
+    <aside className="app-sidebar sidebar" aria-label="主要导航">
       <div className="sidebar-logo">
         <div className="sidebar-brand-row">
           <span className="logo-icon" aria-hidden="true"><Box size={20} /></span>

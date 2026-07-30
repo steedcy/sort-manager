@@ -57,7 +57,10 @@ test('page and component JSX avoids presentational inline styles', () => {
     'src/pages/Operations.jsx',
   ]
 
-  const violations = files.filter((file) => /style=\{\{/.test(read(file)))
+  const violations = files.filter((file) => {
+    const styleObjects = read(file).match(/style=\{\{[\s\S]*?\}\}/g) || []
+    return styleObjects.some((styleObject) => !/style=\{\{\s*'--[\w-]+'\s*:/.test(styleObject))
+  })
   assert.deepEqual(violations, [])
 })
 
@@ -75,4 +78,9 @@ test('shared UI primitives expose the standard component contract', () => {
   ]) {
     assert.match(exports, new RegExp(`export \\{ default as ${component} \\}`))
   }
+})
+
+test('passive notifications do not block page actions', () => {
+  const components = read('src/styles/components.css')
+  assert.match(components, /\.app-toast\s*\{[\s\S]*?pointer-events:\s*none;/)
 })

@@ -7,6 +7,7 @@ import ImageUpload from '../components/ImageUpload'
 import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
 import AuthImage from '../components/AuthImage'
+import { Button, Card, FormField, PageHeader, Skeleton } from '../components/ui'
 
 const initialForm = { name: '', description: '', parentId: '', imageUrl: '' }
 
@@ -16,35 +17,27 @@ function TreeNode({ node, allLocations, onEdit, onDelete }) {
 
   return (
     <div className="tree-node">
-      <div className="tree-node-header" onClick={() => hasChildren && setOpen(o => !o)}>
-        <div style={{ width:'20px', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          {hasChildren
-            ? (open ? <ChevronDown size={14} color="#6366f1"/> : <ChevronRight size={14} color="#6366f1"/>)
-            : <div style={{ width:'14px' }}/>
-          }
-        </div>
-        <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'var(--bg-tag)',
-          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+      <div className="location-node">
+        {hasChildren ? (
+          <button className="location-node__toggle" type="button" aria-expanded={open} aria-label={`${open ? '收起' : '展开'}位置 ${node.name}`} onClick={() => setOpen((value) => !value)}>
+            {open ? <ChevronDown size={16} aria-hidden="true"/> : <ChevronRight size={16} aria-hidden="true"/>}
+          </button>
+        ) : <span className="location-node__spacer" aria-hidden="true" />}
+        <div className="location-node__icon">
           {node.imageUrl
-            ? <AuthImage src={node.imageUrl} alt={`${node.name} 位置图片`} fallback={<MapPin size={14} color="#6366f1"/>}
-                style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'8px' }}/>
-            : <MapPin size={14} color="#6366f1"/>
+            ? <AuthImage src={node.imageUrl} alt={`${node.name} 位置图片`} fallback={<MapPin size={15}/>} className="location-node__photo"/>
+            : <MapPin size={15} aria-hidden="true"/>
           }
         </div>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:'14px', fontWeight:'600', color:'var(--text-primary)' }}>{node.name}</div>
-          {node.description && (
-            <div style={{ fontSize:'12px', color:'var(--text-muted)' }}>{node.description}</div>
-          )}
+        <div className="location-node__identity">
+          <strong>{node.name}</strong>
+          {node.description && <span>{node.description}</span>}
         </div>
-        <span style={{ fontSize:'12px', color:'var(--text-muted)', background:'var(--bg-tag)',
-          padding:'2px 8px', borderRadius:'20px', marginRight:'8px' }}>
-          {node.itemCount} 件
-        </span>
-        <button className="btn btn-secondary" onClick={e => { e.stopPropagation(); onEdit(node) }}
-          aria-label={`编辑位置 ${node.name}`} style={{ padding:'5px 8px', fontSize:'12px', marginRight:'4px' }}><Pencil size={12}/></button>
-        <button className="btn btn-danger" onClick={e => { e.stopPropagation(); onDelete(node) }}
-          aria-label={`删除位置 ${node.name}`} style={{ padding:'5px 8px' }}><Trash2 size={12}/></button>
+        <span className="count-badge">{node.itemCount} 件</span>
+        <div className="location-node__actions">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(node)} aria-label={`编辑位置 ${node.name}`}><Pencil size={16}/></Button>
+          <Button variant="danger" size="icon" onClick={() => onDelete(node)} aria-label={`删除位置 ${node.name}`}><Trash2 size={16}/></Button>
+        </div>
       </div>
       {hasChildren && open && (
         <div className="tree-children">
@@ -118,19 +111,18 @@ export default function Locations() {
   }
 
   return (
-    <div className="page-content">
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
-        marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
-        <div>
-          <div className="page-title-line"><MapPin size={24} aria-hidden="true" /><h1 className="page-title">收纳位置</h1></div>
-          <p className="page-subtitle">共 {allLocations.length} 个位置</p>
-        </div>
-        <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加位置</button>
-      </div>
+    <div className="page-content locations-page">
+      <PageHeader
+        icon={<MapPin size={22}/>}
+        eyebrow="家庭档案 · 空间索引"
+        title="收纳位置"
+        subtitle={`共 ${allLocations.length} 个位置`}
+        actions={<Button type="button" icon={<Plus size={16}/>} onClick={openCreate}>添加位置</Button>}
+      />
 
       {loading ? (
-        <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-          {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height:'60px', borderRadius:'12px' }}/>)}
+        <div className="location-skeletons" role="status" aria-label="正在加载收纳位置">
+          {[1,2,3].map(i => <Skeleton key={i} variant="card" />)}
         </div>
       ) : tree.length === 0 ? (
         <div className="card">
@@ -138,23 +130,21 @@ export default function Locations() {
             action={<button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加位置</button>}/>
         </div>
       ) : (
-        <div className="card" style={{ padding:'16px' }}>
+        <Card className="location-tree">
           {tree.map(node => (
             <TreeNode key={node.id} node={node} allLocations={allLocations} onEdit={openEdit} onDelete={handleDelete}/>
           ))}
-        </div>
+        </Card>
       )}
 
       {showModal && (
         <Modal title={editing ? '编辑位置' : '添加位置'}
           onClose={() => setShowModal(false)} onSubmit={handleSave} loading={saving}>
-          <div className="input-group">
-            <label className="input-label">位置名称 *</label>
+          <FormField id="location-name" label="位置名称" required>
             <input className="input" placeholder="如：客厅、卧室抽屉..." value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}/>
-          </div>
-          <div className="input-group">
-            <label className="input-label">上级位置（可选）</label>
+          </FormField>
+          <FormField id="location-parent" label="上级位置（可选）">
             <select className="input" value={form.parentId}
               onChange={e => setForm(f => ({ ...f, parentId: e.target.value }))}>
               <option value="">无（顶级位置）</option>
@@ -162,16 +152,14 @@ export default function Locations() {
                 <option key={l.id} value={l.id}>{l.treeName}</option>
               )}
             </select>
-          </div>
-          <div className="input-group">
-            <label className="input-label">描述</label>
+          </FormField>
+          <FormField id="location-description" label="描述">
             <textarea className="input" placeholder="位置描述（可选）" value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}/>
-          </div>
-          <div className="input-group">
-            <label className="input-label">图片</label>
+          </FormField>
+          <FormField id="location-image" label="图片">
             <ImageUpload value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))}/>
-          </div>
+          </FormField>
         </Modal>
       )}
     </div>

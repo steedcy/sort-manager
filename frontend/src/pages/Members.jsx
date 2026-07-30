@@ -137,7 +137,7 @@ export default function Members() {
       </header>
 
       {showForm && (
-        <section className="card member-create-card" aria-labelledby="member-form-title">
+        <section className="card member-form-card member-create-card" aria-labelledby="member-form-title">
           <div className="member-form-heading">
             <div>
               <h2 id="member-form-title" tabIndex="-1" ref={formHeadingRef}>添加家庭成员</h2>
@@ -206,7 +206,7 @@ export default function Members() {
             action={<button className="btn btn-primary" type="button" onClick={openForm}><Plus size={18} />添加家庭成员</button>} />
         </div>
       ) : (
-        <section className="card members-list" aria-labelledby="member-list-title">
+        <section className="card member-list members-list" aria-labelledby="member-list-title">
           <h2 id="member-list-title" className="sr-only">家庭成员列表</h2>
           <div className="members-table-wrap">
             <table className="members-table">

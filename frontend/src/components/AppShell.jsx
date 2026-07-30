@@ -15,7 +15,7 @@ export default function AppShell() {
   }, [location.pathname])
 
   return (
-    <div className="app-layout">
+    <div className="app-shell app-layout">
       <a className="skip-link" href="#main-content">跳到主要内容</a>
       <Sidebar />
       <div className="mobile-account-bar">

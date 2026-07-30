@@ -4,6 +4,7 @@
   background: var(--color-surface);
   color: var(--color-ink);
   box-shadow: var(--shadow-float);
+  pointer-events: none;
 }
 .card {
   border: 1px solid var(--color-border);

@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
-import { dashboardApi } from '../api'
-import { Package, MapPin, Tag, TrendingUp, Clock, DollarSign, CalendarOff, ShieldCheck, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowRight, CalendarOff, Clock, DollarSign, MapPin, Package, ShieldCheck, Tag, TrendingUp } from 'lucide-react'
+import { dashboardApi } from '../api'
 import AuthImage from '../components/AuthImage'
 import { useAuth } from '../context/AuthContext'
+import { Card, PageHeader, Skeleton, StatusBadge } from '../components/ui'
 
-const StatCard = ({ icon: Icon, label, value, color, bgColor, onClick }) => {
-  const CardElement = onClick ? 'button' : 'div'
+const summaryCards = [
+  { key: 'totalAssetValue', label: '资产总计（元）', icon: DollarSign, route: null, tone: 'asset' },
+  { key: 'totalItems', label: '物品总数', icon: Package, route: '/items', tone: 'items' },
+  { key: 'totalLocations', label: '收纳位置', icon: MapPin, route: '/locations', tone: 'locations' },
+  { key: 'totalCategories', label: '物品分类', icon: Tag, route: '/categories', tone: 'categories' },
+]
+
+function SummaryCard({ item, value, onOpen }) {
+  const Element = item.route ? 'button' : 'div'
   return (
-  <CardElement className={`card stat-card ${onClick ? 'stat-card-button' : ''}`} type={onClick ? 'button' : undefined} onClick={onClick}>
-    <div className="stat-icon" style={{ background: bgColor }}>
-      <Icon size={22} color={color} />
-    </div>
-    <div>
-      <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', lineHeight: 1 }}>
-        {value ?? '—'}
-      </div>
-      <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>{label}</div>
-    </div>
-  </CardElement>
+    <Card as={Element} className={`summary-card summary-card--${item.tone}`} type={item.route ? 'button' : undefined} onClick={item.route ? onOpen : undefined}>
+      <span className="summary-card__icon" aria-hidden="true"><item.icon size={21} /></span>
+      <span className="summary-card__copy">
+        <strong>{value ?? '—'}</strong>
+        <small>{item.label}</small>
+      </span>
+    </Card>
   )
 }
 
@@ -30,36 +34,36 @@ export default function Dashboard() {
 
   useEffect(() => {
     dashboardApi.getStats()
-      .then(res => { setData(res.data); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then((response) => setData(response.data))
+      .finally(() => setLoading(false))
   }, [])
 
-  if (loading) return (
-    <div className="page-content">
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-        {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: '110px', flex: '1', minWidth: '200px' }} />)}
+  if (loading) {
+    return (
+      <div className="page-content dashboard-page" role="status" aria-label="正在加载收纳总览">
+        <div className="inventory-summary">
+          {[1, 2, 3, 4].map((key) => <Skeleton key={key} variant="card" />)}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
-    <div className="page-content">
-      <div style={{ marginBottom: '28px' }}>
-        <div className="page-title-line"><Package size={24} aria-hidden="true" /><h1 className="page-title">收纳总览</h1></div>
-        <p className="page-subtitle">掌握所有物品的存放状态</p>
-      </div>
+    <div className="page-content dashboard-page">
+      <PageHeader
+        icon={<Package size={22} />}
+        eyebrow="家庭档案 · 总览"
+        title="收纳总览"
+        subtitle="掌握所有物品、位置与家庭数据的当前状态"
+      />
 
-      {/* Stats */}
-      <div className="stats-grid" style={{ marginBottom: '28px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <StatCard icon={DollarSign}   label="资产总计 (¥)" value={data?.totalAssetValue ? data.totalAssetValue.toFixed(2) : '0.00'}
-          color="#10b981" bgColor="rgba(16,185,129,0.15)" />
-        <StatCard icon={Package}      label="物品总数"   value={data?.totalItems}
-          color="#6366f1" bgColor="rgba(99,102,241,0.15)"  onClick={() => navigate('/items')} />
-        <StatCard icon={MapPin}       label="收纳位置"   value={data?.totalLocations}
-          color="#06b6d4" bgColor="rgba(6,182,212,0.15)"   onClick={() => navigate('/locations')} />
-        <StatCard icon={Tag}          label="物品分类"   value={data?.totalCategories}
-          color="#8b5cf6" bgColor="rgba(139,92,246,0.15)"  onClick={() => navigate('/categories')} />
-      </div>
+      <section className="inventory-summary" aria-label="收纳统计">
+        {summaryCards.map((item) => {
+          const rawValue = data?.[item.key]
+          const value = item.key === 'totalAssetValue' ? Number(rawValue || 0).toFixed(2) : rawValue
+          return <SummaryCard key={item.key} item={item} value={value} onOpen={() => navigate(item.route)} />
+        })}
+      </section>
 
       {user.role === 'OWNER' && (
         <button className="dashboard-operations-entry" type="button" onClick={() => navigate('/operations')}>
@@ -69,141 +73,76 @@ export default function Dashboard() {
         </button>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        {/* Expiring Items (New Panel) */}
+      <div className="dashboard-grid">
         {data?.expiringItems?.length > 0 && (
-          <div className="card" style={{ padding: '20px', gridColumn: '1 / -1', background: 'var(--bg-card)', border: '1px solid #fecaca' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <CalendarOff size={16} color="#ef4444" />
-              <span style={{ fontWeight: '600', color: '#ef4444', fontSize: '15px' }}>临期/过期预警 ({data.expiringItems.length})</span>
+          <Card className="dashboard-panel expiry-panel">
+            <div className="dashboard-panel__heading">
+              <span><CalendarOff size={18} aria-hidden="true" /><strong>临期 / 过期预警</strong></span>
+              <StatusBadge tone="danger">{data.expiringItems.length} 件</StatusBadge>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
-              {data.expiringItems.map(item => (
-                <button key={item.id} type="button" className="dashboard-list-button"
-                  onClick={() => navigate('/items')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
-                    background: item.status === '过期' ? '#fef2f2' : '#fff7ed',
-                    border: `1px solid ${item.status === '过期' ? '#fca5a5' : '#fed7aa'}`,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: item.status === '过期' ? '#b91c1c' : '#c2410c',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: item.status === '过期' ? '#dc2626' : '#ea580c', marginTop: '2px' }}>
-                      过期时间: {item.expiryDate}
-                    </div>
-                  </div>
-                  <span style={{
-                    fontSize: '11px', padding: '3px 8px', borderRadius: '20px', whiteSpace: 'nowrap', fontWeight: 'bold',
-                    background: item.status === '过期' ? '#fee2e2' : '#ffedd5',
-                    color: item.status === '过期' ? '#dc2626' : '#ea580c',
-                  }}>{item.status}</span>
-                </button>
-              ))}
+            <div className="expiry-list">
+              {data.expiringItems.map((item) => {
+                const expired = item.status === '过期'
+                return (
+                  <button key={item.id} className={`expiry-item ${expired ? 'expiry-item--expired' : ''}`} type="button" onClick={() => navigate('/items')}>
+                    <span><strong>{item.name}</strong><small>到期时间：{item.expiryDate}</small></span>
+                    <StatusBadge tone={expired ? 'danger' : 'warning'}>{item.status}</StatusBadge>
+                  </button>
+                )
+              })}
             </div>
-          </div>
+          </Card>
         )}
 
-        {/* Recent Items */}
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Clock size={16} color="#6366f1" />
-            <span style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '15px' }}>最近添加</span>
-          </div>
-          {data?.recentItems?.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {data.recentItems.slice(0, 6).map(item => (
-                <button key={item.id} type="button" className="dashboard-list-button"
+        <Card className="dashboard-panel recent-items">
+          <div className="dashboard-panel__heading"><span><Clock size={18} aria-hidden="true" /><strong>最近添加</strong></span></div>
+          {data?.recentItems?.length ? (
+            <div className="recent-items__list">
+              {data.recentItems.slice(0, 6).map((item) => (
+                <button
+                  key={item.id}
+                  className="recent-item"
+                  type="button"
                   onClick={() => navigate('/items')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
-                    transition: 'background 0.15s',
-                    background: 'var(--bg-hover)',
-                    border: '1px solid var(--border-default)',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(99,102,241,0.12)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-hover)'}
+                  style={{ '--category-color': item.categoryColor || 'var(--color-primary)' }}
                 >
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0,
-                    background: item.categoryColor ? `${item.categoryColor}22` : 'var(--bg-tag)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <span className="recent-item__image">
                     {item.imageUrl
-                      ? <AuthImage src={item.imageUrl} alt={`${item.name} 图片`}
-                          fallback={<Package size={16} color={item.categoryColor || '#6366f1'} />}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
-                      : <Package size={16} color={item.categoryColor || '#6366f1'} />
-                    }
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {item.locationPath || '未设置位置'}
-                    </div>
-                  </div>
-                  {item.categoryName && (
-                    <span style={{
-                      fontSize: '11px', padding: '3px 8px', borderRadius: '20px', whiteSpace: 'nowrap',
-                      background: item.categoryColor ? `${item.categoryColor}22` : 'var(--bg-tag)',
-                      color: item.categoryColor || '#6366f1',
-                    }}>{item.categoryName}</span>
-                  )}
+                      ? <AuthImage src={item.imageUrl} alt={`${item.name} 图片`} className="recent-item__photo" fallback={<Package size={17} />} />
+                      : <Package size={17} aria-hidden="true" />}
+                  </span>
+                  <span className="recent-item__copy"><strong>{item.name}</strong><small>{item.locationPath || '未设置位置'}</small></span>
+                  {item.categoryName && <span className="category-chip">{item.categoryName}</span>}
                 </button>
               ))}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontSize: '14px' }}>
-              暂无物品
-            </div>
-          )}
-        </div>
+          ) : <p className="panel-empty">暂无物品</p>}
+        </Card>
 
-        {/* Category Stats */}
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <TrendingUp size={16} color="#8b5cf6" />
-            <span style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '15px' }}>分类统计</span>
-          </div>
-          {data?.categoryStats?.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {data.categoryStats
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 6)
-                .map(cat => {
-                  const max = Math.max(...data.categoryStats.map(c => c.count))
-                  const pct = max > 0 ? (cat.count / max) * 100 : 0
-                  return (
-                    <div key={cat.id}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{cat.name}</span>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: cat.color || '#6366f1' }}>{cat.count}</span>
-                      </div>
-                      <div style={{ height: '6px', borderRadius: '3px', background: 'var(--bg-hover)', overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', width: `${pct}%`,
-                          background: `linear-gradient(90deg, ${cat.color || '#6366f1'}, ${cat.color || '#8b5cf6'})`,
-                          borderRadius: '3px', transition: 'width 0.5s ease',
-                        }} />
-                      </div>
-                    </div>
-                  )
-                })}
+        <Card className="dashboard-panel category-distribution">
+          <div className="dashboard-panel__heading"><span><TrendingUp size={18} aria-hidden="true" /><strong>分类统计</strong></span></div>
+          {data?.categoryStats?.length ? (
+            <div className="category-distribution__list">
+              {[...data.categoryStats].sort((a, b) => b.count - a.count).slice(0, 6).map((category) => {
+                const max = Math.max(...data.categoryStats.map((candidate) => candidate.count))
+                const percent = max > 0 ? (category.count / max) * 100 : 0
+                return (
+                  <div
+                    className="category-meter"
+                    key={category.id}
+                    style={{
+                      '--category-color': category.color || 'var(--color-primary)',
+                      '--category-percent': `${percent}%`,
+                    }}
+                  >
+                    <span><span>{category.name}</span><strong>{category.count}</strong></span>
+                    <div className="category-meter__track"><span /></div>
+                  </div>
+                )
+              })}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px', fontSize: '14px' }}>
-              暂无分类数据
-            </div>
-          )}
-        </div>
+          ) : <p className="panel-empty">暂无分类数据</p>}
+        </Card>
       </div>
     </div>
   )

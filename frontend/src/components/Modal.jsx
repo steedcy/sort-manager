@@ -1,21 +1,24 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { X, Loader2 } from 'lucide-react'
 
 export default function Modal({ title, onClose, onSubmit, loading, children, wide }) {
   const closeRef = useRef(null)
+  const closeFromKeyboard = useEffectEvent(() => {
+    if (!loading) onClose()
+  })
 
   useEffect(() => {
     const previousFocus = document.activeElement
     closeRef.current?.focus()
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape' && !loading) onClose()
+      if (event.key === 'Escape') closeFromKeyboard()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       previousFocus?.focus?.()
     }
-  }, [loading, onClose])
+  }, [])
 
   return (
     <div className="modal-overlay" onMouseDown={(event) => event.target === event.currentTarget && !loading && onClose()}>

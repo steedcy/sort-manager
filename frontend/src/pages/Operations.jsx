@@ -91,7 +91,7 @@ export default function Operations() {
         <div className="card operations-error" role="alert"><span>{loadError}</span><button className="btn btn-secondary" onClick={load} type="button">重新加载</button></div>
       ) : (
         <>
-          <section className="operations-status-grid" aria-label="家庭运营摘要">
+          <section className="operations-summary operations-status-grid" aria-label="家庭运营摘要">
             <StatusCell icon={DatabaseBackup} label="备份状态" value={backup.title} detail={backup.detail} tone={backup.tone} />
             <StatusCell icon={ArchiveRestore} label="回收站" value={`${summary?.recycleBinItems ?? '—'} 件`} detail="可恢复的误删物品" />
             <StatusCell icon={UserRoundCheck} label="家庭访问" value={`${summary?.activeMembers ?? '—'} 人`} detail={`${summary?.activeSessions ?? '—'} 个活动会话`} />
@@ -111,7 +111,7 @@ export default function Operations() {
                 </label>
               </div>
               {loading ? <TapeSkeleton /> : activities.length ? (
-                <ol className="activity-tape">
+                <ol className="activity-timeline activity-tape">
                   {activities.map((event, index) => <ActivityEntry event={event} key={event.id ?? `${event.createdAt}-${index}`} />)}
                 </ol>
               ) : <EmptyState icon={Activity} title="还没有操作记录" desc={action ? '当前筛选条件下没有记录。' : '今后的重要变更会显示在这里。'} />}

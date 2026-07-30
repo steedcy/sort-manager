@@ -213,7 +213,7 @@ export default function BulkItems() {
         <Link className="btn btn-ghost" to="/items"><X size={17} aria-hidden="true" />返回物品</Link>
       </header>
 
-      <section className="bulk-import-panel card" aria-labelledby="bulk-import-title">
+      <section className="bulk-import-card bulk-import-panel card" aria-labelledby="bulk-import-title">
         <div className="bulk-import-copy">
           <span className="bulk-step">准备清单</span>
           <h2 id="bulk-import-title">从表格快速开始</h2>

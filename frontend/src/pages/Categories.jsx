@@ -4,9 +4,11 @@ import { Plus, Tag, Pencil, Trash2 } from 'lucide-react'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
+import { Button, Card, FormField, PageHeader, Skeleton } from '../components/ui'
 
-const COLORS = ['#6366f1','#8b5cf6','#ec4899','#ef4444','#f59e0b','#22c55e','#06b6d4','#3b82f6','#f97316','#6b7280']
-const initialForm = { name: '', icon: 'Package', color: '#6366f1' }
+const DEFAULT_CATEGORY_COLOR = '#2f6b57'
+const COLORS = ['#2f6b57', '#9a641c', '#3f6f8f', '#725a83', '#9b4d4d', '#6f7835', '#3f7770', '#8a5c3d', '#5f6b66', '#46534b']
+const initialForm = { name: '', icon: 'Package', color: DEFAULT_CATEGORY_COLOR }
 
 export default function Categories() {
   const [categories, setCategories] = useState([])
@@ -61,55 +63,44 @@ export default function Categories() {
   }
 
   return (
-    <div className="page-content">
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
-        marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
-        <div>
-          <div className="page-title-line"><Tag size={24} aria-hidden="true" /><h1 className="page-title">分类管理</h1></div>
-          <p className="page-subtitle">共 {categories.length} 个分类</p>
-        </div>
-        <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加分类</button>
-      </div>
+    <div className="page-content categories-page">
+      <PageHeader
+        icon={<Tag size={22} />}
+        eyebrow="家庭档案 · 分类索引"
+        title="分类管理"
+        subtitle={`共 ${categories.length} 个分类`}
+        actions={<Button type="button" icon={<Plus size={16} />} onClick={openCreate}>添加分类</Button>}
+      />
 
       {loading ? (
-        <div className="stats-grid">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton" style={{ height:'110px', borderRadius:'16px' }}/>)}
+        <div className="category-grid" role="status" aria-label="正在加载分类">
+          {[1,2,3,4,5,6].map(i => <Skeleton key={i} variant="card" />)}
         </div>
       ) : categories.length === 0 ? (
-        <div className="card">
+        <Card>
           <EmptyState icon={Tag} title="暂无分类" desc="添加物品分类方便整理"
             action={<button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加分类</button>}/>
-        </div>
+        </Card>
       ) : (
-        <div className="stats-grid">
+        <div className="category-grid">
           {categories.map(cat => (
-            <div key={cat.id} className="card" style={{ padding:'20px' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'14px' }}>
-                <div style={{ width:'44px', height:'44px', borderRadius:'12px', flexShrink:0,
-                  background: cat.color ? `${cat.color}22` : 'var(--bg-tag)',
-                  display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <Tag size={20} color={cat.color || '#6366f1'}/>
-                </div>
+            <Card key={cat.id} className="category-card" style={{ '--category-color': cat.color || DEFAULT_CATEGORY_COLOR }}>
+              <div className="category-card__identity">
+                <div className="category-card__icon"><Tag size={20} aria-hidden="true"/></div>
                 <div>
-                  <div style={{ fontSize:'16px', fontWeight:'600', color:'var(--text-primary)' }}>{cat.name}</div>
-                  <div style={{ fontSize:'13px', color:'var(--text-muted)' }}>{cat.itemCount} 件物品</div>
+                  <strong>{cat.name}</strong>
+                  <span>{cat.itemCount} 件物品</span>
                 </div>
               </div>
-              {/* color swatch */}
-              <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'14px' }}>
-                <div style={{ width:'16px', height:'16px', borderRadius:'50%', background: cat.color || '#6366f1' }}/>
-                <span style={{ fontSize:'12px', color:'var(--text-subtle)' }}>{cat.color || '#6366f1'}</span>
+              <div className="category-color">
+                <span aria-hidden="true" />
+                <code>{cat.color || DEFAULT_CATEGORY_COLOR}</code>
               </div>
-              <div style={{ display:'flex', gap:'6px', borderTop:'1px solid var(--border-default)', paddingTop:'12px' }}>
-                <button className="btn btn-secondary" onClick={() => openEdit(cat)}
-                  style={{ flex:1, fontSize:'12px', padding:'7px' }}>
-                  <Pencil size={12}/> 编辑
-                </button>
-                <button className="btn btn-danger" onClick={() => handleDelete(cat)} style={{ padding:'7px 10px' }} aria-label={`删除分类 ${cat.name}`}>
-                  <Trash2 size={12}/>
-                </button>
+              <div className="category-card__actions">
+                <Button variant="secondary" size="sm" icon={<Pencil size={14}/>} onClick={() => openEdit(cat)}>编辑</Button>
+                <Button variant="danger" size="icon" onClick={() => handleDelete(cat)} aria-label={`删除分类 ${cat.name}`}><Trash2 size={16}/></Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -117,40 +108,32 @@ export default function Categories() {
       {showModal && (
         <Modal title={editing ? '编辑分类' : '添加分类'}
           onClose={() => setShowModal(false)} onSubmit={handleSave} loading={saving}>
-          <div className="input-group">
-            <label className="input-label">分类名称 *</label>
+          <FormField id="category-name" label="分类名称" required>
             <input className="input" placeholder="如：电子产品、衣物..." value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}/>
-          </div>
-          <div className="input-group">
-            <label className="input-label">颜色</label>
-            <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', padding:'4px 0' }}>
+          </FormField>
+          <FormField id="category-color" label="颜色">
+            <div className="category-palette" id="category-color" role="group" aria-label="选择分类颜色">
               {COLORS.map(c => (
-                <div key={c} onClick={() => setForm(f => ({ ...f, color: c }))}
-                  style={{
-                    width:'28px', height:'28px', borderRadius:'50%', background:c, cursor:'pointer',
-                    border: form.color === c ? '2px solid var(--text-primary)' : '2px solid transparent',
-                    boxShadow: form.color === c ? `0 0 0 2px ${c}55` : 'none',
-                    transition:'all 0.15s',
-                  }}/>
+                <button
+                  key={c}
+                  type="button"
+                  className={form.color === c ? 'is-selected' : ''}
+                  aria-label={`选择颜色 ${c}`}
+                  aria-pressed={form.color === c}
+                  onClick={() => setForm(f => ({ ...f, color: c }))}
+                  style={{ '--category-color': c }}
+                />
               ))}
             </div>
-          </div>
-          <div className="input-group">
-            <label className="input-label">预览效果</label>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'12px',
-              background:'var(--bg-hover)', borderRadius:'10px', border:'1px solid var(--border-default)' }}>
-              <div style={{ width:'36px', height:'36px', borderRadius:'10px',
-                background: `${form.color || '#6366f1'}22`,
-                display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Tag size={18} color={form.color||'#6366f1'}/>
-              </div>
-              <span style={{ color:'var(--text-primary)', fontWeight:'500' }}>{form.name || '分类名称'}</span>
-              <span style={{ fontSize:'12px', padding:'3px 8px', borderRadius:'20px', marginLeft:'auto',
-                background: `${form.color || '#6366f1'}22`,
-                color: form.color || '#6366f1' }}>预览</span>
+          </FormField>
+          <FormField id="category-preview" label="预览效果">
+            <div className="category-preview" id="category-preview" style={{ '--category-color': form.color || DEFAULT_CATEGORY_COLOR }}>
+              <span className="category-preview__icon"><Tag size={18} aria-hidden="true"/></span>
+              <strong>{form.name || '分类名称'}</strong>
+              <span className="category-chip">预览</span>
             </div>
-          </div>
+          </FormField>
         </Modal>
       )}
     </div>

@@ -11,8 +11,6 @@ import {
   X,
   CheckSquare,
   Square,
-  ChevronLeft,
-  ChevronRight,
   ArchiveRestore,
 } from 'lucide-react'
 import Modal from '../components/Modal'
@@ -21,6 +19,7 @@ import ImageUpload from '../components/ImageUpload'
 import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
 import AuthImage from '../components/AuthImage'
+import { Card, PageHeader, Pagination, Skeleton, StatusBadge, Toolbar } from '../components/ui'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -246,24 +245,23 @@ export default function Items() {
   }
 
   return (
-    <div className="page-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-        marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div className="page-title-line"><Package size={24} aria-hidden="true" /><h1 className="page-title">物品管理</h1></div>
-          <p className="page-subtitle">共 {pageData.totalElements} 件物品，当前显示 {items.length} 件</p>
-        </div>
-        <div className="items-heading-actions">
+    <div className="page-content items-page">
+      <PageHeader
+        icon={<Package size={22}/>}
+        eyebrow="家庭档案 · 物品目录"
+        title="物品管理"
+        subtitle={`共 ${pageData.totalElements} 件物品，当前显示 ${items.length} 件`}
+        actions={<>
           <Link className="btn btn-secondary" to="/items/bulk"><ArchiveRestore size={16}/>批量录入</Link>
           <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加物品</button>
-        </div>
-      </div>
+        </>}
+      />
 
-      <div className="items-toolbar">
+      <Toolbar className="items-toolbar item-toolbar">
         <div className="search-bar">
           <Search className="search-icon" size={16}/>
           <input className="input" placeholder="搜索物品名称或描述..." aria-label="搜索物品名称或描述" value={keyword}
-            onChange={updateFilter(setKeyword)} style={{ paddingLeft: '38px' }}/>
+            onChange={updateFilter(setKeyword)}/>
         </div>
         <select className="input items-toolbar-control"
           value={filterCategory} onChange={updateFilter(setFilterCategory)} aria-label="按分类筛选">
@@ -302,11 +300,11 @@ export default function Items() {
             <X size={14}/> 清除
           </button>
         )}
-      </div>
+      </Toolbar>
 
       {loading ? (
         <div className="items-grid">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="skeleton" style={{ height: '220px', borderRadius: '16px' }}/>)}
+          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} variant="card" />)}
         </div>
       ) : items.length === 0 ? (
         <div className="card">
@@ -318,7 +316,7 @@ export default function Items() {
           {items.map(item => {
             const isSelected = selectedItems.has(item.id)
             return (
-              <div key={item.id} data-testid="item-card" className="card item-card" style={{ position: 'relative', border: isSelected ? '2px solid var(--primary)' : undefined }}>
+              <Card key={item.id} data-testid="item-card" className={`item-card ${isSelected ? 'item-card--selected' : ''}`}>
                 <button
                   type="button"
                   aria-label={isSelected ? `取消选择 ${item.name}` : `选择 ${item.name}`}
@@ -331,83 +329,57 @@ export default function Items() {
                   ? <AuthImage src={item.imageUrl} alt={`${item.name} 图片`} className="item-image"
                       fallback={<div className="item-image-placeholder"><Package size={32}/></div>} />
                   : <div className="item-image-placeholder"><Package size={32}/></div>}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                    <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
-                      {item.name}
-                    </div>
+                <div className="item-card__body">
+                  <div className="item-card__heading">
+                    <strong>{item.name}</strong>
                     {item.status === '过期' ? (
-                      <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#fee2e2', color: '#dc2626' }}>已过期</span>
+                      <StatusBadge tone="danger">已过期</StatusBadge>
                     ) : item.status === '临期' ? (
-                      <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#fef3c7', color: '#d97706' }}>临期</span>
+                      <StatusBadge tone="warning">临期</StatusBadge>
                     ) : (
-                      <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#dcfce7', color: '#16a34a' }}>正常</span>
+                      <StatusBadge tone="success">正常</StatusBadge>
                     )}
                   </div>
 
                   {item.locationPath && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px',
-                      color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    <div className="item-card__location">
                       <MapPin size={11}/> {item.locationPath}
                     </div>
                   )}
 
-                  <div style={{ fontSize: '12px', color: 'var(--text-subtle)', marginBottom: '6px' }}>
-                    💰 单价: ￥{item.price?.toFixed(2) || '0.00'} | 总计: ￥{item.totalPrice?.toFixed(2) || '0.00'}
+                  <div className="item-card__meta">
+                    单价：￥{item.price?.toFixed(2) || '0.00'} · 总计：￥{item.totalPrice?.toFixed(2) || '0.00'}
                   </div>
 
-                  <div style={{ fontSize: '11px', color: 'var(--text-subtle)', marginBottom: '6px' }}>
-                    📅 购入: {item.purchaseDate} {item.expiryDate && `| 过期: ${item.expiryDate}`}
+                  <div className="item-card__meta">
+                    购入：{item.purchaseDate} {item.expiryDate && `· 到期：${item.expiryDate}`}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div className="item-card__footer">
                     {item.categoryName
-                      ? <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '20px',
-                          background: item.categoryColor ? `${item.categoryColor}22` : 'var(--bg-tag)',
-                          color: item.categoryColor || '#6366f1' }}>{item.categoryName}</span>
+                      ? <span className="category-chip" style={{ '--category-color': item.categoryColor || 'var(--color-primary)' }}>{item.categoryName}</span>
                       : <span/>
                     }
-                    <span style={{ fontSize: '12px', color: 'var(--text-subtle)' }}>×{item.quantity}</span>
+                    <span className="item-card__quantity">×{item.quantity}</span>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px', borderTop: '1px solid var(--border-default)', paddingTop: '10px' }}>
-                  <button className="btn btn-secondary" onClick={() => openEdit(item)}
-                    style={{ flex: 1, padding: '7px', fontSize: '12px' }}>
+                <div className="item-card__actions">
+                  <button className="btn btn-secondary" onClick={() => openEdit(item)}>
                     <Pencil size={13}/> 编辑
                   </button>
-                  <button className="btn btn-danger" onClick={() => handleDelete(item)} style={{ padding: '7px 10px' }} aria-label={`将 ${item.name} 移入回收站`} title="移入回收站">
+                  <button className="btn btn-danger" onClick={() => handleDelete(item)} aria-label={`将 ${item.name} 移入回收站`} title="移入回收站">
                     <Trash2 size={13}/>
                   </button>
                 </div>
-              </div>
+              </Card>
             )
           })}
         </div>
       )}
 
       {!loading && pageData.totalPages > 0 && (
-        <nav className="pagination-bar" aria-label="物品分页">
-          <div className="pagination-summary">
-            第 {pageData.page + 1} / {pageData.totalPages} 页，共 {pageData.totalElements} 件
-          </div>
-          <div className="pagination-controls">
-            <select className="input pagination-size" value={size}
-              onChange={e => { setSize(Number(e.target.value)); setPage(0) }} aria-label="每页数量">
-              <option value={12}>每页 12</option>
-              <option value={24}>每页 24</option>
-              <option value={48}>每页 48</option>
-            </select>
-            <button className="btn btn-secondary" disabled={pageData.first}
-              onClick={() => setPage(current => Math.max(0, current - 1))}>
-              <ChevronLeft size={16}/> 上一页
-            </button>
-            <button className="btn btn-secondary" disabled={pageData.last}
-              onClick={() => setPage(current => current + 1)}>
-              下一页 <ChevronRight size={16}/>
-            </button>
-          </div>
-        </nav>
+        <Pagination page={pageData.page} totalPages={pageData.totalPages} totalElements={pageData.totalElements}
+          pageSize={size} onPageChange={setPage} onPageSizeChange={(nextSize) => { setSize(nextSize); setPage(0) }}/>
       )}
 
       {showModal && (
@@ -418,7 +390,7 @@ export default function Items() {
             <input id="item-name" className="input" placeholder="如：充电宝、螺丝刀..." value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}/>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-grid">
             <div className="input-group">
               <label className="input-label" htmlFor="item-category">分类</label>
               <select id="item-category" className="input" value={form.categoryId}
@@ -483,12 +455,12 @@ export default function Items() {
       )}
 
       {selectedItems.size > 0 && (
-        <div className="batch-action-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>已选择 {selectedItems.size} 项</span>
-            <button className="btn btn-ghost" onClick={() => setSelectedItems(new Set())} style={{ padding: '4px 8px', fontSize: '13px' }}>取消</button>
+        <div className="batch-action-bar batch-action-dock">
+          <div className="batch-action-dock__summary">
+            <strong>已选择 {selectedItems.size} 项</strong>
+            <button className="btn btn-ghost" onClick={() => setSelectedItems(new Set())}>取消</button>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="batch-action-dock__actions">
             <button className="btn btn-primary" onClick={() => { setBatchLocationId(''); setShowBatchMoveModal(true) }}>
               <MapPin size={16}/> 批量移动
             </button>

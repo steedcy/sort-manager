@@ -25,29 +25,20 @@ export default function ImageUpload({ value, onChange }) {
   }
 
   return (
-    <div>
+    <div className="image-upload">
       {value ? (
-        <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+        <div className="image-upload__preview">
           <AuthImage
             src={value}
             alt="preview"
             fallback={<div className="upload-preview-fallback">图片暂时无法显示</div>}
-            style={{
-              width: '100%', maxHeight: '180px', objectFit: 'cover',
-              borderRadius: '10px', border: '1px solid var(--border-default)',
-              display: 'block',
-            }}
+            className="image-upload__image"
           />
           <button
             type="button"
             onClick={() => onChange('')}
             aria-label="移除已上传图片"
-            style={{
-              position: 'absolute', top: '8px', right: '8px',
-              background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
-              width: '44px', height: '44px', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', cursor: 'pointer', color: '#fff',
-            }}
+            className="image-upload__remove"
           >
             <X size={14} />
           </button>
@@ -64,29 +55,14 @@ export default function ImageUpload({ value, onChange }) {
             }
           }}
           aria-label="选择要上传的图片"
-          style={{
-            border: '2px dashed var(--border-strong)',
-            borderRadius: '12px', padding: '32px',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', gap: '8px',
-            cursor: 'pointer', transition: 'all 0.2s',
-            color: 'var(--text-subtle)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(99,102,241,0.55)'
-            e.currentTarget.style.background = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border-strong)'
-            e.currentTarget.style.background = 'transparent'
-          }}
+          className="image-upload__dropzone"
         >
           {uploading
-            ? <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>上传中...</div>
+            ? <div className="image-upload__status">上传中...</div>
             : <>
-                <Image size={28} style={{ color: 'var(--empty-icon-color)' }} />
-                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>点击上传图片</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-subtle)' }}>支持 JPG、PNG、GIF，最大 10MB</div>
+                <Image size={28} className="image-upload__icon" aria-hidden="true" />
+                <div className="image-upload__label">点击上传图片</div>
+                <div className="image-upload__hint">支持 JPG、PNG、GIF，最大 10MB</div>
               </>
           }
         </div>
@@ -95,7 +71,7 @@ export default function ImageUpload({ value, onChange }) {
         ref={inputRef}
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
+        className="sr-only"
         onChange={(e) => handleFile(e.target.files[0])}
       />
     </div>
