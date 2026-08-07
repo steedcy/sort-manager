@@ -20,6 +20,12 @@ public class ItemController {
 
     private final ItemService itemService;
     private final ItemBatchService itemBatchService;
+    private final com.sort.manager.service.IsbnBookService isbnBookService;
+
+    @GetMapping("/isbn/{isbn}")
+    public ApiResponse<ItemDTO> getByIsbn(@PathVariable String isbn) {
+        return ApiResponse.ok(isbnBookService.lookupByIsbn(isbn));
+    }
 
     @GetMapping
     public ApiResponse<PageResponse<ItemDTO>> getAll(

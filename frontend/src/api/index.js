@@ -49,6 +49,7 @@ export const locationApi = {
 export const itemApi = {
   getAll: (params) => api.get('/items', { params }),
   getById: (id) => api.get(`/items/${id}`),
+  getByIsbn: (isbn) => api.get(`/items/isbn/${isbn}`),
   create: (data) => api.post('/items', data),
   update: (id, data) => api.put(`/items/${id}`, data),
   move: (id, locationId) => api.put(`/items/${id}/move`, { locationId }),

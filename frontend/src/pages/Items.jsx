@@ -14,6 +14,7 @@ import {
   ArchiveRestore,
   Download,
   Printer,
+  BookOpen,
 } from 'lucide-react'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
@@ -67,6 +68,38 @@ export default function Items() {
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [showBatchMoveModal, setShowBatchMoveModal] = useState(false)
   const [batchLocationId, setBatchLocationId] = useState('')
+  const [showIsbnModal, setShowIsbnModal] = useState(false)
+  const [isbnInput, setIsbnInput] = useState('')
+  const [isbnSearching, setIsbnSearching] = useState(false)
+
+  const handleIsbnSearch = async () => {
+    if (!isbnInput.trim()) { toast.error('请输入 10 位或 13 位 ISBN 条形码编码'); return }
+    setIsbnSearching(true)
+    const toastId = toast.loading('正在检索图书信息...')
+    try {
+      const res = await itemApi.getByIsbn(isbnInput.trim())
+      const book = res.data
+      if (book) {
+        toast.success(`检索成功：《${book.name}》`, { id: toastId })
+        const matchedCat = categories.find(c => c.name.includes('书') || c.name.includes('图'))
+        setForm({
+          ...initialForm,
+          name: book.name || '',
+          description: book.description || '',
+          price: book.price || 0,
+          imageUrl: book.imageUrl || '',
+          categoryId: matchedCat ? matchedCat.id : (categories[0]?.id || ''),
+        })
+        setEditing(null)
+        setShowIsbnModal(false)
+        setShowModal(true)
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || '未查询到图书信息，请检查编码或手动录入', { id: toastId })
+    } finally {
+      setIsbnSearching(false)
+    }
+  }
 
   const buildParams = useCallback(() => {
     const params = { page, size, sort, direction }
@@ -227,6 +260,7 @@ export default function Items() {
         title="物品管理"
         subtitle={`共 ${pageData.totalElements} 件物品，当前显示 ${items.length} 件`}
         actions={<>
+          <button className="btn btn-secondary" type="button" onClick={() => { setIsbnInput(''); setShowIsbnModal(true) }}><BookOpen size={16}/> 扫码/识别图书</button>
           <button className="btn btn-secondary" type="button" onClick={() => exportItemsToExcel(items)}><Download size={16}/> 导出 Excel</button>
           <button className="btn btn-secondary" type="button" onClick={() => printItemsReport(items)}><Printer size={16}/> 打印/PDF</button>
           <Link className="btn btn-secondary" to="/items/bulk"><ArchiveRestore size={16}/> 批量录入</Link>
@@ -434,6 +468,19 @@ export default function Items() {
               <option value="">请选择存放位置</option>
               {locations.map(l => <option key={l.id} value={l.id}>{l.treeName}</option>)}
             </select>
+          </div>
+        </Modal>
+      )}
+
+      {showIsbnModal && (
+        <Modal title="扫码 / ISBN 识别图书入库" onClose={() => setShowIsbnModal(false)} onSubmit={handleIsbnSearch} loading={isbnSearching}>
+          <div className="input-group">
+            <label className="input-label">ISBN 条码编码 (10位或13位) *</label>
+            <input className="input" placeholder="例如：9787111544364" value={isbnInput} autoFocus
+              onChange={e => setIsbnInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleIsbnSearch() }}/>
+            <small style={{ color: 'var(--color-ink-muted)', marginTop: '4px', display: 'block' }}>
+              系统将优先请求豆瓣开源 API、Google Books 及 Open Library 检索书名、作者、定价及封面全量信息并自动填单。
+            </small>
           </div>
         </Modal>
       )}

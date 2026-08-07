@@ -72,6 +72,6 @@
     <button class="button-danger logout-button" loading="{{loggingOut}}" disabled="{{loggingOut}}" bindtap="confirmLogout">
       {{loggingOut ? '正在退出' : '退出登录'}}
     </button>
-    <view class="version-text">Sort Manager Mini Program · v1.7.0</view>
+    <view class="version-text">Sort Manager Mini Program · v1.8.0</view>
   </block>
 </view>

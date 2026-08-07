@@ -77,4 +77,36 @@ Page({
     }
   },
   goToAdd() { wx.switchTab({ url: '/pages/add/index' }) },
+  scanIsbnBook() {
+    wx.scanCode({
+      scanType: ['barCode'],
+      success: async (res) => {
+        const isbn = res.result
+        if (!isbn) return
+        wx.showLoading({ title: '检索图书中...' })
+        try {
+          const bookRes = await api.request(`/items/isbn/${isbn}`)
+          wx.hideLoading()
+          if (bookRes && bookRes.data) {
+            const book = bookRes.data
+            wx.showModal({
+              title: `识别图书：《${book.name}》`,
+              content: `${book.description || ''}\n价格：￥${book.price || 0}`,
+              confirmText: '去录入',
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  wx.navigateTo({
+                    url: `/pages/entry/index?name=${encodeURIComponent(book.name)}&description=${encodeURIComponent(book.description || '')}&price=${book.price || 0}&imageUrl=${encodeURIComponent(book.imageUrl || '')}`
+                  })
+                }
+              }
+            })
+          }
+        } catch (err) {
+          wx.hideLoading()
+          wx.showToast({ title: '未查询到图书信息', icon: 'none' })
+        }
+      }
+    })
+  },
 })

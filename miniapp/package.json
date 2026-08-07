@@ -1,7 +1,7 @@
 {
   "name": "sort-manager-miniapp",
   "private": true,
-  "version": "1.7.0",
+  "version": "1.8.0",
   "scripts": {
     "test": "node --test tests/*.test.js",
     "check": "node scripts/check.js"

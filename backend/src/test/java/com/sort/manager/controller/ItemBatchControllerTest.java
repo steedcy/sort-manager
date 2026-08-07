@@ -25,7 +25,7 @@ class ItemBatchControllerTest {
         ItemBatchResponse result = new ItemBatchResponse(1, 1, 0, List.of(), List.of());
         when(batchService.process(argThat(request -> Boolean.TRUE.equals(request.getValidateOnly())
                 && request.getItems().size() == 1))).thenReturn(result);
-        MockMvc mvc = MockMvcBuilders.standaloneSetup(new ItemController(mock(com.sort.manager.service.ItemService.class), batchService))
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new ItemController(mock(com.sort.manager.service.ItemService.class), batchService, mock(com.sort.manager.service.IsbnBookService.class)))
                 .build();
 
         mvc.perform(post("/api/v1/items/batch")
@@ -42,7 +42,7 @@ class ItemBatchControllerTest {
     @Test
     void rejectsRequestsThatOmitValidateOnly() throws Exception {
         ItemBatchService batchService = mock(ItemBatchService.class);
-        MockMvc mvc = MockMvcBuilders.standaloneSetup(new ItemController(mock(com.sort.manager.service.ItemService.class), batchService))
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new ItemController(mock(com.sort.manager.service.ItemService.class), batchService, mock(com.sort.manager.service.IsbnBookService.class)))
                 .build();
 
         mvc.perform(post("/api/v1/items/batch")

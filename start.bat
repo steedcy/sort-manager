@@ -27,7 +27,7 @@ if "%MISSING%"=="1" (
 if "%APP_JWT_SECRET%"=="" (
   echo.
   echo Missing APP_JWT_SECRET in .env.
-  echo Generate a random secret with at least 32 bytes before starting v1.7.
+  echo Generate a random secret with at least 32 bytes before starting v1.8.
   echo.
   pause
   exit /b 1
