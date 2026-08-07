@@ -1,15 +1,20 @@
-export default function PageHeader({ icon, eyebrow, title, subtitle, actions }) {
+import React from 'react'
+
+export default function PageHeader({ icon, title, subtitle, actions }) {
+  const renderedIcon = React.isValidElement(icon)
+    ? React.cloneElement(icon, { size: icon.props.size || 24, 'aria-hidden': true })
+    : icon
+
   return (
-    <header className="page-header">
-      <div className="page-header__copy">
-        {eyebrow && <span className="archive-label">{eyebrow}</span>}
-        <div className="page-header__title-row">
-          {icon && <span className="page-header__icon" aria-hidden="true">{icon}</span>}
-          <h1>{title}</h1>
+    <header className="page-heading-row page-header">
+      <div>
+        <div className="page-title-line">
+          {renderedIcon}
+          <h1 className="page-title">{title}</h1>
         </div>
-        {subtitle && <p>{subtitle}</p>}
+        {subtitle && <p className="page-subtitle">{subtitle}</p>}
       </div>
-      {actions && <div className="page-header__actions">{actions}</div>}
+      {actions && <div className="page-heading-actions">{actions}</div>}
     </header>
   )
 }

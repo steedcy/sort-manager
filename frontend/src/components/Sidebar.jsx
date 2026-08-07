@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Activity, ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Package, Tag, Users } from 'lucide-react'
+import { Activity, ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Package, Tag, UserRound, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const primaryItems = [
@@ -42,7 +42,7 @@ export default function Sidebar() {
 
       <div className="sidebar-account">
         <div className="account-summary">
-          <span className="account-avatar" aria-hidden="true">{user.displayName?.slice(0, 1) || '家'}</span>
+          <span className="account-avatar" aria-hidden="true"><UserRound size={20} /></span>
           <div>
             <strong>{user.displayName}</strong>
             <span>{user.householdName || '默认家庭'} · {user.role === 'OWNER' ? '管理员' : '成员'}</span>
@@ -53,7 +53,7 @@ export default function Sidebar() {
             <LogOut size={17} aria-hidden="true" />退出登录
           </button>
         </div>
-        <span className="sidebar-version">v1.6.0</span>
+        <span className="sidebar-version">v1.7.0</span>
       </div>
     </aside>
   )

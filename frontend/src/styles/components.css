@@ -68,19 +68,44 @@
 .form-field__hint { color: var(--color-ink-muted); }
 .form-field--error input, .form-field--error select, .form-field--error textarea { border-color: var(--color-danger); }
 
-.page-header {
+.page-heading-row, .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-6);
+  gap: var(--space-4);
   margin-bottom: var(--space-6);
+  width: 100%;
+  box-sizing: border-box;
 }
-.page-header__copy { display: grid; gap: var(--space-2); }
-.page-header__title-row { display: flex; align-items: center; gap: var(--space-3); }
-.page-header__title-row h1 { margin: 0; font-family: "Songti SC", SimSun, serif; font-size: clamp(1.75rem, 3vw, 2.4rem); line-height: 1.15; }
-.page-header__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--color-primary-soft); color: var(--color-primary); }
-.page-header p { margin: 0; color: var(--color-ink-muted); }
-.page-header__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.page-title-line, .page-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-title-line svg, .page-header__title-row svg {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+.page-title, .page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-ink);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.page-subtitle, .page-header p {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-size: 14px;
+  color: var(--color-ink-muted);
+}
+.page-heading-actions, .page-header__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
 .archive-label {
   width: fit-content;
   padding: var(--space-1) var(--space-2);
@@ -140,7 +165,10 @@
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 @media (max-width: 767px) {
-  .page-header, .pagination { align-items: stretch; flex-direction: column; }
+  .page-header, .pagination { align-items: stretch; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
+  .page-header__title-row h1 { font-size: 1.4rem; }
   .page-header__actions > * { flex: 1; }
   .pagination__controls { flex-wrap: wrap; }
+  .toolbar { padding: 10px 12px; gap: var(--space-2); }
+  .ui-card { border-radius: var(--radius-md); }
 }

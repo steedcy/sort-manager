@@ -30,10 +30,12 @@ function TreeNode({ node, allLocations, onEdit, onDelete }) {
           }
         </div>
         <div className="location-node__identity">
-          <strong>{node.name}</strong>
+          <div className="location-node__header">
+            <strong>{node.name}</strong>
+            <span className="count-badge">{node.itemCount} 件</span>
+          </div>
           {node.description && <span>{node.description}</span>}
         </div>
-        <span className="count-badge">{node.itemCount} 件</span>
         <div className="location-node__actions">
           <Button variant="ghost" size="icon" onClick={() => onEdit(node)} aria-label={`编辑位置 ${node.name}`}><Pencil size={16}/></Button>
           <Button variant="danger" size="icon" onClick={() => onDelete(node)} aria-label={`删除位置 ${node.name}`}><Trash2 size={16}/></Button>

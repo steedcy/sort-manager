@@ -6,8 +6,8 @@ import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
 import { Button, Card, FormField, PageHeader, Skeleton } from '../components/ui'
 
-const DEFAULT_CATEGORY_COLOR = '#2f6b57'
-const COLORS = ['#2f6b57', '#9a641c', '#3f6f8f', '#725a83', '#9b4d4d', '#6f7835', '#3f7770', '#8a5c3d', '#5f6b66', '#46534b']
+const DEFAULT_CATEGORY_COLOR = '#00a6f4'
+const COLORS = ['#00a6f4', '#9a641c', '#3f6f8f', '#725a83', '#9b4d4d', '#6f7835', '#3f7770', '#8a5c3d', '#16a34a', '#46534b']
 const initialForm = { name: '', icon: 'Package', color: DEFAULT_CATEGORY_COLOR }
 
 export default function Categories() {
