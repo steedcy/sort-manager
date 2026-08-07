@@ -212,6 +212,7 @@ public class ItemBatchService {
         } else {
             dto.setStatus("正常");
         }
+        dto.setIsLowStock(item.getQuantity() != null && item.getQuantity() <= 2);
         if (item.getCategory() != null) {
             dto.setCategoryId(item.getCategory().getId());
             dto.setCategoryName(item.getCategory().getName());

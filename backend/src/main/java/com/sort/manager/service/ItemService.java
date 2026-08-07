@@ -318,6 +318,7 @@ public class ItemService {
         } else {
             dto.setStatus("\u6b63\u5e38");
         }
+        dto.setIsLowStock(item.getQuantity() != null && item.getQuantity() <= 2);
 
         dto.setImageUrl(item.getImageUrl());
         if (item.getCategory() != null) {

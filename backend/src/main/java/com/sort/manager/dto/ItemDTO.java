@@ -22,6 +22,7 @@ public class ItemDTO {
     private String purchaseDate;
     private String expiryDate;
     private String status;
+    private Boolean isLowStock;
     private Long categoryId;
     private String categoryName;
     private String categoryIcon;

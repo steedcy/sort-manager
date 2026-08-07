@@ -12,6 +12,8 @@ import {
   CheckSquare,
   Square,
   ArchiveRestore,
+  Download,
+  Printer,
 } from 'lucide-react'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
@@ -20,6 +22,8 @@ import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
 import AuthImage from '../components/AuthImage'
 import { Card, PageHeader, Pagination, Skeleton, StatusBadge, Toolbar } from '../components/ui'
+import { exportItemsToExcel, printItemsReport } from '../utils/exporter'
+import VirtualGrid from '../components/VirtualGrid'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -252,8 +256,10 @@ export default function Items() {
         title="物品管理"
         subtitle={`共 ${pageData.totalElements} 件物品，当前显示 ${items.length} 件`}
         actions={<>
-          <Link className="btn btn-secondary" to="/items/bulk"><ArchiveRestore size={16}/>批量录入</Link>
-          <button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加物品</button>
+          <button className="btn btn-secondary" type="button" onClick={() => exportItemsToExcel(items)}><Download size={16}/> 导出 Excel</button>
+          <button className="btn btn-secondary" type="button" onClick={() => printItemsReport(items)}><Printer size={16}/> 打印/PDF</button>
+          <Link className="btn btn-secondary" to="/items/bulk"><ArchiveRestore size={16}/> 批量录入</Link>
+          <button className="btn btn-primary" type="button" onClick={openCreate}><Plus size={16}/> 添加物品</button>
         </>}
       />
 
@@ -312,8 +318,10 @@ export default function Items() {
             action={<button className="btn btn-primary" onClick={openCreate}><Plus size={16}/> 添加物品</button>}/>
         </div>
       ) : (
-        <div className="items-grid">
-          {items.map(item => {
+        <VirtualGrid
+          items={items}
+          className="items-grid"
+          renderItem={item => {
             const isSelected = selectedItems.has(item.id)
             return (
               <Card key={item.id} data-testid="item-card" className={`item-card ${isSelected ? 'item-card--selected' : ''}`}>
@@ -332,13 +340,18 @@ export default function Items() {
                 <div className="item-card__body">
                   <div className="item-card__heading">
                     <strong>{item.name}</strong>
-                    {item.status === '过期' ? (
-                      <StatusBadge tone="danger">已过期</StatusBadge>
-                    ) : item.status === '临期' ? (
-                      <StatusBadge tone="warning">临期</StatusBadge>
-                    ) : (
-                      <StatusBadge tone="success">正常</StatusBadge>
-                    )}
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {item.status === '过期' ? (
+                        <StatusBadge tone="danger">已过期</StatusBadge>
+                      ) : item.status === '临期' ? (
+                        <StatusBadge tone="warning">临期</StatusBadge>
+                      ) : (
+                        <StatusBadge tone="success">正常</StatusBadge>
+                      )}
+                      {(item.isLowStock || item.quantity <= 2) && (
+                        <StatusBadge tone="warning">低库存</StatusBadge>
+                      )}
+                    </div>
                   </div>
 
                   {item.locationPath && (
@@ -373,8 +386,8 @@ export default function Items() {
                 </div>
               </Card>
             )
-          })}
-        </div>
+          }}
+        />
       )}
 
       {!loading && pageData.totalPages > 0 && (

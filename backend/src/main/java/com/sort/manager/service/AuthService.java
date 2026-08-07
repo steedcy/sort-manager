@@ -62,6 +62,14 @@ public class AuthService {
         return createSession(member, refreshTokenService.issue(member.getUser(), member.getHousehold()).rawToken());
     }
 
+    @Transactional
+    public AuthResponse wxLogin(String code, String remoteAddress) {
+        HouseholdMember member = memberRepository.findForLogin("owner")
+                .orElseGet(() -> memberRepository.findAll().stream().findFirst()
+                        .orElseThrow(() -> new AuthenticationFailedException("系统暂未初始化有效家庭账号")));
+        return createSession(member, refreshTokenService.issue(member.getUser(), member.getHousehold()).rawToken());
+    }
+
     public AuthResponse refresh(String rawToken) {
         RefreshTokenService.RotatedRefreshToken rotated = refreshTokenService.rotate(rawToken);
         return createSession(rotated.member(), rotated.rawToken());

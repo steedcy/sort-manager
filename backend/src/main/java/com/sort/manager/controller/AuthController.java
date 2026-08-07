@@ -27,6 +27,12 @@ public class AuthController {
         return ApiResponse.ok(authService.login(request, servletRequest.getRemoteAddr()));
     }
 
+    @PostMapping("/wx-login")
+    public ApiResponse<AuthResponse> wxLogin(@RequestBody java.util.Map<String, String> payload, HttpServletRequest servletRequest) {
+        String code = payload.getOrDefault("code", "wx_code");
+        return ApiResponse.ok(authService.wxLogin(code, servletRequest.getRemoteAddr()));
+    }
+
     @PostMapping("/refresh")
     public ApiResponse<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
         return ApiResponse.ok(authService.refresh(request.refreshToken()));

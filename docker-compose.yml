@@ -1,0 +1,57 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: sort-manager-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-Root@2026!}
+      MYSQL_DATABASE: ${DB_NAME:-sort_manager}
+      MYSQL_USER: ${DB_USERNAME:-sort_manager_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-SortApp@2026!}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sort-manager-backend
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:mysql://db:3306/${DB_NAME:-sort_manager}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: ${DB_USERNAME:-sort_manager_app}
+      DB_PASSWORD: ${DB_PASSWORD:-SortApp@2026!}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-c29ydC1tYW5hZ2VyLWp3dC1zZWNyZXQtcGhhcmFzZS1rZXktMjAyNiE=}
+      FLYWAY_ENABLED: "true"
+      APP_UPLOAD_PATH: /app/uploads
+    volumes:
+      - app_uploads:/app/uploads
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sort-manager-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  app_uploads:
