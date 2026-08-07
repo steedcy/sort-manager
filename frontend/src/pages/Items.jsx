@@ -24,6 +24,7 @@ import AuthImage from '../components/AuthImage'
 import { Card, PageHeader, Pagination, Skeleton, StatusBadge, Toolbar } from '../components/ui'
 import { exportItemsToExcel, printItemsReport } from '../utils/exporter'
 import VirtualGrid from '../components/VirtualGrid'
+import { useSWR, invalidateSWRCache } from '../utils/swrCache'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -51,10 +52,6 @@ const initialPage = {
 }
 
 export default function Items() {
-  const [items, setItems] = useState([])
-  const [categories, setCategories] = useState([])
-  const [locations, setLocations] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(initialForm)
@@ -67,7 +64,6 @@ export default function Items() {
   const [size, setSize] = useState(12)
   const [sort, setSort] = useState('createdAt')
   const [direction, setDirection] = useState('desc')
-  const [pageData, setPageData] = useState(initialPage)
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [showBatchMoveModal, setShowBatchMoveModal] = useState(false)
   const [batchLocationId, setBatchLocationId] = useState('')
@@ -81,60 +77,31 @@ export default function Items() {
     return params
   }, [keyword, filterCategory, filterLocation, filterStatus, page, size, sort, direction])
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [ir, cr, lr] = await Promise.all([
-        itemApi.getAll(buildParams()),
-        categoryApi.getAll(),
-        locationApi.getAll(),
-      ])
-      const nextPage = ir.data || initialPage
-      if ((nextPage.content || []).length === 0 && nextPage.totalElements > 0 && page > 0) {
-        setPage(Math.max(0, nextPage.totalPages - 1))
-        return
-      }
-      setPageData(nextPage)
-      setItems(nextPage.content || [])
-      setCategories(cr.data || [])
-      setLocations(buildLocationTreeOptions(lr.data || []))
-      setSelectedItems(new Set())
-    } finally {
-      setLoading(false)
+  const fetcher = useCallback(async () => {
+    const [ir, cr, lr] = await Promise.all([
+      itemApi.getAll(buildParams()),
+      categoryApi.getAll(),
+      locationApi.getAll(),
+    ])
+    return {
+      pageData: ir.data || initialPage,
+      categories: cr.data || [],
+      locations: buildLocationTreeOptions(lr.data || []),
     }
-  }, [buildParams, page])
+  }, [buildParams])
 
-  useEffect(() => {
-    let cancelled = false
+  const swrKey = ['items', buildParams()]
+  const { data: swrData, loading, revalidate } = useSWR(swrKey, fetcher)
 
-    async function loadInitial() {
-      setLoading(true)
-      try {
-        const [ir, cr, lr] = await Promise.all([
-          itemApi.getAll(buildParams()),
-          categoryApi.getAll(),
-          locationApi.getAll(),
-        ])
-        if (!cancelled) {
-          const nextPage = ir.data || initialPage
-          if ((nextPage.content || []).length === 0 && nextPage.totalElements > 0 && page > 0) {
-            setPage(Math.max(0, nextPage.totalPages - 1))
-            return
-          }
-          setPageData(nextPage)
-          setItems(nextPage.content || [])
-          setCategories(cr.data || [])
-          setLocations(buildLocationTreeOptions(lr.data || []))
-          setSelectedItems(new Set())
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
+  const pageData = swrData?.pageData || initialPage
+  const items = pageData.content || []
+  const categories = swrData?.categories || []
+  const locations = swrData?.locations || []
 
-    loadInitial()
-    return () => { cancelled = true }
-  }, [buildParams, page])
+  const load = useCallback(() => {
+    invalidateSWRCache('items')
+    return revalidate()
+  }, [revalidate])
 
   const updateFilter = (setter) => (event) => {
     setter(event.target.value)
@@ -194,6 +161,8 @@ export default function Items() {
         await itemApi.create(payload)
         toast.success('物品添加成功')
       }
+      invalidateSWRCache('items')
+      invalidateSWRCache('dashboard')
       setShowModal(false)
       load()
     } finally {
@@ -205,6 +174,8 @@ export default function Items() {
     if (!window.confirm(`确认将「${item.name}」移入回收站？之后可由家庭管理员恢复。`)) return
     await itemApi.delete(item.id)
     toast.success('已移入回收站')
+    invalidateSWRCache('items')
+    invalidateSWRCache('dashboard')
     load()
   }
 

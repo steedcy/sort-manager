@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { locationApi } from '../api'
 import { Plus, MapPin, Pencil, Trash2, ChevronRight, ChevronDown } from 'lucide-react'
 import Modal from '../components/Modal'
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
 import AuthImage from '../components/AuthImage'
 import { Button, Card, FormField, PageHeader, Skeleton } from '../components/ui'
+import { useSWR, invalidateSWRCache } from '../utils/swrCache'
 
 const initialForm = { name: '', description: '', parentId: '', imageUrl: '' }
 
@@ -53,41 +54,19 @@ function TreeNode({ node, allLocations, onEdit, onDelete }) {
 }
 
 export default function Locations() {
-  const [tree, setTree]             = useState([])
-  const [allLocations, setAll]      = useState([])
-  const [loading, setLoading]       = useState(true)
+  const fetcher = useCallback(async () => {
+    const [tr, ar] = await Promise.all([locationApi.getTree(), locationApi.getAll()])
+    return { tree: tr.data || [], all: buildLocationTreeOptions(ar.data || []) }
+  }, [])
+
+  const { data: locData, loading, revalidate } = useSWR('locations', fetcher)
+  const tree = locData?.tree || []
+  const allLocations = locData?.all || []
+
   const [showModal, setShowModal]   = useState(false)
   const [editing, setEditing]       = useState(null)
   const [form, setForm]             = useState(initialForm)
   const [saving, setSaving]         = useState(false)
-
-  const load = async () => {
-    setLoading(true)
-    try {
-      const [tr, ar] = await Promise.all([locationApi.getTree(), locationApi.getAll()])
-      setTree(tr.data || [])
-      setAll(buildLocationTreeOptions(ar.data || []))
-    } finally { setLoading(false) }
-  }
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadInitial() {
-      try {
-        const [tr, ar] = await Promise.all([locationApi.getTree(), locationApi.getAll()])
-        if (!cancelled) {
-          setTree(tr.data || [])
-          setAll(buildLocationTreeOptions(ar.data || []))
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    loadInitial()
-    return () => { cancelled = true }
-  }, [])
 
   const openCreate = () => { setEditing(null); setForm(initialForm); setShowModal(true) }
   const openEdit = (loc) => {
@@ -103,13 +82,18 @@ export default function Locations() {
       const payload = { ...form, parentId: form.parentId ? Number(form.parentId) : null }
       if (editing) { await locationApi.update(editing.id, payload); toast.success('位置更新成功') }
       else { await locationApi.create(payload); toast.success('位置创建成功') }
-      setShowModal(false); load()
+      invalidateSWRCache('locations')
+      setShowModal(false)
+      revalidate()
     } finally { setSaving(false) }
   }
 
   const handleDelete = async (loc) => {
     if (!window.confirm(`确认删除「${loc.name}」？子位置将变为顶级位置。`)) return
-    await locationApi.delete(loc.id); toast.success('删除成功'); load()
+    await locationApi.delete(loc.id)
+    toast.success('删除成功')
+    invalidateSWRCache('locations')
+    revalidate()
   }
 
   return (

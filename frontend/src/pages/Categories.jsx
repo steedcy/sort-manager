@@ -1,49 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useState, useCallback } from 'react'
 import { categoryApi } from '../api'
 import { Plus, Tag, Pencil, Trash2 } from 'lucide-react'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
 import { Button, Card, FormField, PageHeader, Skeleton } from '../components/ui'
+import { useSWR, invalidateSWRCache } from '../utils/swrCache'
 
 const DEFAULT_CATEGORY_COLOR = '#00a6f4'
 const COLORS = ['#00a6f4', '#9a641c', '#3f6f8f', '#725a83', '#9b4d4d', '#6f7835', '#3f7770', '#8a5c3d', '#16a34a', '#46534b']
 const initialForm = { name: '', icon: 'Package', color: DEFAULT_CATEGORY_COLOR }
 
 export default function Categories() {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading]       = useState(true)
+  const fetcher = useCallback(() => categoryApi.getAll(), [])
+  const { data: rawCategories, loading, revalidate } = useSWR('categories', fetcher)
+  const categories = rawCategories || []
+
   const [showModal, setShowModal]   = useState(false)
   const [editing, setEditing]       = useState(null)
   const [form, setForm]             = useState(initialForm)
   const [saving, setSaving]         = useState(false)
 
-  const load = async () => {
-    setLoading(true)
-    try { const res = await categoryApi.getAll(); setCategories(res.data || []) }
-    finally { setLoading(false) }
-  }
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadInitial() {
-      try {
-        const res = await categoryApi.getAll()
-        if (!cancelled) setCategories(res.data || [])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    loadInitial()
-    return () => { cancelled = true }
-  }, [])
-
   const openCreate = () => { setEditing(null); setForm(initialForm); setShowModal(true) }
   const openEdit = (cat) => {
     setEditing(cat)
-    setForm({ name: cat.name, icon: cat.icon||'Package', color: cat.color||'#6366f1' })
+    setForm({ name: cat.name, icon: cat.icon||'Package', color: cat.color||'#00a6f4' })
     setShowModal(true)
   }
 
@@ -53,13 +34,18 @@ export default function Categories() {
     try {
       if (editing) { await categoryApi.update(editing.id, form); toast.success('分类更新成功') }
       else { await categoryApi.create(form); toast.success('分类创建成功') }
-      setShowModal(false); load()
+      invalidateSWRCache('categories')
+      setShowModal(false)
+      revalidate()
     } finally { setSaving(false) }
   }
 
   const handleDelete = async (cat) => {
     if (!window.confirm(`确认删除「${cat.name}」？该分类下的物品将变为未分类。`)) return
-    await categoryApi.delete(cat.id); toast.success('删除成功'); load()
+    await categoryApi.delete(cat.id)
+    toast.success('删除成功')
+    invalidateSWRCache('categories')
+    revalidate()
   }
 
   return (

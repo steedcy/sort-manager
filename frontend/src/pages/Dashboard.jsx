@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, CalendarOff, Clock, DollarSign, MapPin, Package, ShieldCheck, Tag, TrendingUp } from 'lucide-react'
 import { dashboardApi } from '../api'
 import AuthImage from '../components/AuthImage'
 import { useAuth } from '../context/AuthContext'
 import { Card, PageHeader, Skeleton, StatusBadge } from '../components/ui'
+import { useSWR } from '../utils/swrCache'
 
 const summaryCards = [
   { key: 'totalAssetValue', label: '资产总计（元）', icon: DollarSign, route: null, tone: 'asset' },
@@ -27,16 +28,10 @@ function SummaryCard({ item, value, onOpen }) {
 }
 
 export default function Dashboard() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { user } = useAuth()
-
-  useEffect(() => {
-    dashboardApi.getStats()
-      .then((response) => setData(response.data))
-      .finally(() => setLoading(false))
-  }, [])
+  const fetcher = useCallback(() => dashboardApi.getStats(), [])
+  const { data, loading } = useSWR('dashboard', fetcher)
 
   if (loading) {
     return (
