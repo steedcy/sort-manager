@@ -46,6 +46,18 @@ class AuthSecurityIntegrationTest {
     HouseholdMemberRepository memberRepository;
 
     @Test
+    void invalidLoginReturnsUnauthorizedInsteadOfGenericServerError() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"test-owner","password":"wrong-password"}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("用户名或密码错误"));
+    }
+
+    @Test
     void healthIsPublicAndBusinessApisRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/v1/health"))
                 .andExpect(status().isOk())

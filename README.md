@@ -34,18 +34,42 @@
 
 飞牛 **fnOS** 原生内置了优秀的 **Docker 项目 (Compose)** 管理面板，部署极简、稳定无依赖。
 
-### 方案一：飞牛 fnOS Web UI 图形化一键部署（推荐 👍）
+### 方案一：飞牛 fnOS Web UI 图形化部署（推荐 👍）
 
-#### 1. 新建项目目录
-在飞牛 fnOS 的“文件管理器”中，于 `docker` 共享文件夹下新建文件夹：`/docker/sort-manager`。
+#### 1. 先将完整源码放入项目目录
 
-#### 2. 新建 Compose 项目
+在飞牛 fnOS 的“文件管理器”中，于 `docker` 共享文件夹下新建 `/docker/sort-manager`，然后把本仓库的完整源码上传并解压到该目录。完成后必须能看到：
+
+```text
+/docker/sort-manager/backend/Dockerfile
+/docker/sort-manager/frontend/Dockerfile
+/docker/sort-manager/docker-compose.yml
+```
+
+> 如果 GitHub 仓库是私有的，不要在 `build.context` 中直接填写 GitHub HTTPS 地址。Docker BuildKit 在飞牛后台非交互构建时无法弹出认证提示，会报 `could not read Username ... terminal prompts disabled`。可以从已有权限的电脑上传源码，或先在 NAS SSH 中配置 GitHub SSH 密钥后执行 `git clone git@github.com:steedcy/sort-manager.git`。
+
+#### 2. 创建生产环境变量文件
+
+在 `/docker/sort-manager` 中复制 `.env.example` 为 `.env`，并至少设置下列项：
+
+```dotenv
+DB_ROOT_PASSWORD=<独立的-MySQL-root-强密码>
+DB_PASSWORD=<独立的-应用数据库-强密码>
+APP_JWT_SECRET=<至少-32-字节的随机密钥>
+APP_BOOTSTRAP_USERNAME=owner
+APP_BOOTSTRAP_PASSWORD=<至少-10-位的初始管理员强密码>
+APP_HTTP_PORT=8090
+```
+
+可以用 `openssl rand -base64 48` 生成 `APP_JWT_SECRET`。不要把真实 `.env` 提交到 Git，也不要继续使用 README 或历史示例中的公开密码。
+
+#### 3. 新建 Compose 项目
 1. 打开飞牛 fnOS 桌面 ➔ 进入 **Docker 应用** ➔ 点击左侧 **项目 (Compose)** ➔ 点击右上角 **“新建项目”**。
 2. **项目名称**：`sort-manager`
 3. **路径**：选择 `/docker/sort-manager`
 
-#### 3. 填入 Compose 配置
-在代码编辑框中粘贴以下配置（已针对 NAS 部署优化，服务端口映射为 `8090`）：
+#### 4. 填入 Compose 配置
+在代码编辑框中粘贴以下配置。注意 `build.context` 必须是项目目录内的本地相对路径：
 
 ```yaml
 services:
@@ -53,10 +77,10 @@ services:
     image: mysql:8.4
     container_name: sort-manager-db
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-Root@2026!}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: ${DB_NAME:-sort_manager}
       MYSQL_USER: ${DB_USERNAME:-sort_manager_app}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-SortApp@2026!}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -69,15 +93,19 @@ services:
 
   backend:
     build:
-      context: https://github.com/steedcy/sort-manager.git#main:backend
+      context: ./backend
       dockerfile: Dockerfile
     container_name: sort-manager-backend
     environment:
       SERVER_PORT: 8080
       DB_URL: jdbc:mysql://db:3306/${DB_NAME:-sort_manager}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
       DB_USERNAME: ${DB_USERNAME:-sort_manager_app}
-      DB_PASSWORD: ${DB_PASSWORD:-SortApp@2026!}
-      APP_JWT_SECRET: c29ydC1tYW5hZ2VyLWp3dC1zZWNyZXQtcGhhcmFzZS1rZXktMjAyNiE=
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Set APP_JWT_SECRET in .env}
+      APP_BOOTSTRAP_USERNAME: ${APP_BOOTSTRAP_USERNAME:-owner}
+      APP_BOOTSTRAP_PASSWORD: ${APP_BOOTSTRAP_PASSWORD:?Set APP_BOOTSTRAP_PASSWORD in .env}
+      APP_BOOTSTRAP_DISPLAY_NAME: ${APP_BOOTSTRAP_DISPLAY_NAME:-家庭管理员}
+      APP_BOOTSTRAP_HOUSEHOLD_NAME: ${APP_BOOTSTRAP_HOUSEHOLD_NAME:-我的家庭}
       FLYWAY_ENABLED: "true"
       APP_UPLOAD_PATH: /app/uploads
     volumes:
@@ -91,11 +119,11 @@ services:
 
   frontend:
     build:
-      context: https://github.com/steedcy/sort-manager.git#main:frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: sort-manager-frontend
     ports:
-      - "8090:80"
+      - "${APP_HTTP_PORT:-8090}:80"
     depends_on:
       - backend
     restart: unless-stopped
@@ -105,18 +133,22 @@ volumes:
   app_uploads:
 ```
 
-#### 4. 构建并启动
-点击 **“构建并启动”**，fnOS 会自动拉取最新 v1.8.0 源码并构建启动容器。
+#### 5. 构建并启动
+点击 **“构建并启动”**，fnOS 会使用项目目录中的本地源码构建并启动容器。
 
 ---
 
 ### 方案二：通过 SSH 终端部署
 
 ```bash
-# 进入 docker 目录并克隆代码
+# 进入 docker 目录并克隆代码（私有仓库需要先配置 GitHub SSH 密钥）
 cd /vol1/1000/docker
-git clone https://github.com/steedcy/sort-manager.git sort-manager
+git clone git@github.com:steedcy/sort-manager.git sort-manager
 cd sort-manager
+
+# 填写 DB_ROOT_PASSWORD、DB_PASSWORD、APP_JWT_SECRET 和 APP_BOOTSTRAP_PASSWORD
+cp .env.example .env
+vi .env
 
 # 启动容器
 docker compose up -d --build
@@ -129,11 +161,16 @@ docker compose up -d --build
 容器启动完成后，在 fnOS 终端或 SSH 中运行以下单条命令，即可将 NAS 数据库初始化为预设干净状态（初始化预设的图书、数码分类和客厅、书房位置）：
 
 ```bash
-docker exec -i sort-manager-db mysql -u root -p"Root@2026!" sort_manager < database/reset_initial.sql
+docker exec -i sort-manager-db sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < database/reset_initial.sql
 ```
 
 访问地址：**`http://<你的飞牛NAS的IP>:8090`**  
-初始管理员：`owner` / 密码：`Owner@2026!sort`
+初始管理员：`.env` 中的 `APP_BOOTSTRAP_USERNAME` / `APP_BOOTSTRAP_PASSWORD`
+
+如果登录请求在前端 Nginx 日志中返回 `403`，请确认 `frontend/nginx.conf` 使用
+`proxy_set_header Host $http_host;`。`$http_host` 会保留 `8090` 等外部访问端口，
+避免 Spring 将经 Nginx 反向代理的同源请求误判为跨域请求。修改后需要重新构建并
+创建前端容器：`docker compose build frontend && docker compose up -d --force-recreate frontend`。
 
 ---
 
