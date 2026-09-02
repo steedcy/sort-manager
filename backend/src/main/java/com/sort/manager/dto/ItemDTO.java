@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import com.sort.manager.book.BookMetadata;
 import java.math.BigDecimal;
 
 @Data
@@ -34,4 +35,5 @@ public class ItemDTO {
     private String imageUrl;
     private String createdAt;
     private String updatedAt;
+    private BookMetadata bookMetadata;
 }

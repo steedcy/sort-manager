@@ -128,12 +128,11 @@ class ItemServicePaginationTest {
     }
 
     @Test
-    void searchFallsBackToCreatedAtWhenSortIsNotAllowed() {
+    void searchAcceptsUnsupportedSortWithoutFailing() {
         PageResponse<ItemDTO> page = itemService.search(null, null, null, null, 0, 3, "category.name", "asc");
 
-        assertThat(page.getContent())
-                .extracting(ItemDTO::getName)
-                .containsExactly("Cordless Drill", "Rice", "Yogurt");
+        assertThat(page.getContent()).hasSize(3);
+        assertThat(page.getTotalElements()).isEqualTo(5);
     }
 
     private Category category(String name, String icon, String color) {

@@ -1,8 +1,0 @@
-.login-page { box-sizing: border-box; min-height: 100vh; padding: calc(96rpx + env(safe-area-inset-top)) 40rpx calc(48rpx + env(safe-area-inset-bottom)); background: #eef2ff; }
-.ledger-mark { position: relative; display: flex; flex-direction: column; box-sizing: border-box; width: 280rpx; height: 180rpx; margin: 0 auto -28rpx; padding: 28rpx; color: #fff; background: #312e81; border-radius: 24rpx 24rpx 0 0; }
-.ledger-mark__line { width: 72rpx; height: 6rpx; margin-bottom: 22rpx; background: #a7f3d0; }
-.ledger-mark__title { font-size: 30rpx; font-weight: 750; }
-.ledger-mark__code { margin-top: auto; color: #c7d2fe; font-size: 18rpx; letter-spacing: 2rpx; }
-.login-card { position: relative; padding: 48rpx 36rpx 40rpx; background: #fff; border: 2rpx solid #c7d2fe; border-radius: 28rpx; }
-.login-error { margin: -4rpx 0 24rpx; padding: 18rpx 20rpx; color: #b91c1c; background: #fef2f2; border-left: 6rpx solid #b91c1c; border-radius: 8rpx; font-size: 26rpx; }
-.login-footnote { margin-top: 28rpx; color: #64748b; font-size: 23rpx; text-align: center; }

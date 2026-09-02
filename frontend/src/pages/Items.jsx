@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { itemApi, categoryApi, locationApi } from '../api'
 import {
@@ -19,6 +19,7 @@ import {
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import ImageUpload from '../components/ImageUpload'
+import BookBarcodeScanner from '../components/BookBarcodeScanner'
 import toast from 'react-hot-toast'
 import { buildLocationTreeOptions } from '../utils/tree'
 import AuthImage from '../components/AuthImage'
@@ -26,6 +27,7 @@ import { Card, PageHeader, Pagination, Skeleton, StatusBadge, Toolbar } from '..
 import { exportItemsToExcel, printItemsReport } from '../utils/exporter'
 import VirtualGrid from '../components/VirtualGrid'
 import { useSWR, invalidateSWRCache } from '../utils/swrCache'
+import { mergeBookMetadata } from '../utils/bookMetadata'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -39,6 +41,7 @@ const initialForm = {
   categoryId: '',
   locationId: '',
   imageUrl: '',
+  bookMetadata: null,
 }
 
 const initialPage = {
@@ -71,25 +74,24 @@ export default function Items() {
   const [showIsbnModal, setShowIsbnModal] = useState(false)
   const [isbnInput, setIsbnInput] = useState('')
   const [isbnSearching, setIsbnSearching] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const lookupAbortRef = useRef(null)
 
-  const handleIsbnSearch = async () => {
-    if (!isbnInput.trim()) { toast.error('请输入 10 位或 13 位 ISBN 条形码编码'); return }
+  useEffect(() => () => lookupAbortRef.current?.abort(), [])
+
+  const handleIsbnSearch = async (rawIsbn = isbnInput) => {
+    if (!rawIsbn.trim()) { toast.error('请输入 10 位或 13 位 ISBN 条形码编码'); return }
+    lookupAbortRef.current?.abort()
+    lookupAbortRef.current = new AbortController()
     setIsbnSearching(true)
     const toastId = toast.loading('正在检索图书信息...')
     try {
-      const res = await itemApi.getByIsbn(isbnInput.trim())
-      const book = res.data
+      const res = await itemApi.getByIsbn(rawIsbn.trim(), lookupAbortRef.current.signal)
+      const book = res.data?.metadata
       if (book) {
         toast.success(`检索成功：《${book.name}》`, { id: toastId })
         const matchedCat = categories.find(c => c.name.includes('书') || c.name.includes('图'))
-        setForm({
-          ...initialForm,
-          name: book.name || '',
-          description: book.description || '',
-          price: book.price || 0,
-          imageUrl: book.imageUrl || '',
-          categoryId: matchedCat ? matchedCat.id : (categories[0]?.id || ''),
-        })
+        setForm(current => mergeBookMetadata({ ...initialForm, ...current, categoryId: matchedCat ? matchedCat.id : (categories[0]?.id || '') }, book))
         setEditing(null)
         setShowIsbnModal(false)
         setShowModal(true)
@@ -169,6 +171,7 @@ export default function Items() {
       categoryId: item.categoryId || '',
       locationId: item.locationId || '',
       imageUrl: item.imageUrl || '',
+      bookMetadata: item.bookMetadata || null,
     })
     setShowModal(true)
   }
@@ -223,7 +226,7 @@ export default function Items() {
 
   const handleBatchDelete = async () => {
     if (!window.confirm(`确认将选中的 ${selectedItems.size} 件物品移入回收站？`)) return
-    setLoading(true)
+    setSaving(true)
     try {
       await Promise.all(Array.from(selectedItems).map(id => itemApi.delete(id)))
       toast.success('选中物品已移入回收站')
@@ -231,7 +234,8 @@ export default function Items() {
       load()
     } catch {
       toast.error('部分物品未能移入回收站')
-      setLoading(false)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -345,7 +349,7 @@ export default function Items() {
                 <div className="item-card__body">
                   <div className="item-card__heading">
                     <strong>{item.name}</strong>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="item-card__meta-row">
                       {item.status === '过期' ? (
                         <StatusBadge tone="danger">已过期</StatusBadge>
                       ) : item.status === '临期' ? (
@@ -478,9 +482,9 @@ export default function Items() {
             <label className="input-label">ISBN 条码编码 (10位或13位) *</label>
             <input className="input" placeholder="例如：9787111544364" value={isbnInput} autoFocus
               onChange={e => setIsbnInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleIsbnSearch() }}/>
-            <small style={{ color: 'var(--color-ink-muted)', marginTop: '4px', display: 'block' }}>
-              系统将优先请求豆瓣开源 API、Google Books 及 Open Library 检索书名、作者、定价及封面全量信息并自动填单。
-            </small>
+            <button className="btn btn-secondary book-scan-button" type="button" onClick={() => setScannerOpen(value => !value)}>打开摄像头扫描</button>
+            {scannerOpen && <BookBarcodeScanner onDetected={(value) => { setIsbnInput(value); setScannerOpen(false); handleIsbnSearch(value) }} />}
+            <small className="book-lookup-hint">系统将依次查询 Google Books 和 Open Library；查询失败后仍可手动补录。</small>
           </div>
         </Modal>
       )}

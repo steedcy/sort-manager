@@ -1,6 +1,6 @@
 # Sort Manager Frontend
 
-React 19 + Vite 7 frontend for Sort Manager. Current version: v1.8.0.
+React 19 + Vite 7 frontend for Sort Manager. Current version: v1.9.0.
 
 ```powershell
 npm ci
@@ -12,9 +12,10 @@ The development server defaults to `http://localhost:5173` and proxies `/api` to
 `BACKEND_URL`, or `VITE_API_BASE` (default `/api/v1`).
 
 The login page authenticates against the shared v1 API. Access tokens live in
-`sessionStorage`; rotating refresh tokens live in `localStorage` so the same JSON protocol can
-later be used by the mini-program. Keep dependencies audited and do not inject untrusted HTML.
+`sessionStorage`; rotating refresh tokens live in `localStorage`. Keep dependencies audited and do not inject untrusted HTML.
 Images are loaded through the authenticated file API rather than the old public `/uploads` path.
+
+Mobile camera barcode scanning requires the app to be served from a trusted HTTPS origin. HTTP LAN IP addresses are not secure contexts and browsers will not expose the camera API.
 
 Quality gate:
 

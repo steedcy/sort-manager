@@ -1,8 +1,8 @@
-# 收纳管家 (Sort Manager) v1.8.0
+# 收纳管家 (Sort Manager) v1.9.0
 
 ![Sort Manager Logo](frontend/public/favicon.svg)
 
-一套专为私人家庭与小型办公室设计的**高颜值、高效率、私人数字物品收纳与资产管理系统**。支持多端协作（Web 响应式 PC/H5 + PWA 离线应用 + 原生微信小程序），提供零依赖 Docker / NAS 部署、图书 ISBN 扫码自动识别、SWR 0ms 页面秒开、离线暂存同步、数据导出及数据安全保护。
+一套专为私人家庭与小型办公室设计的**高颜值、高效率、私人数字物品收纳与资产管理系统**。提供响应式 Web/PWA、Docker / NAS 部署、图书 ISBN 扫码自动识别、SWR 0ms 页面秒开、离线暂存同步、数据导出及数据安全保护。
 
 ---
 
@@ -10,8 +10,8 @@
 
 - 🎨 **现代化美学视觉**：精心设计的蓝色主题 (`#00a6f4`)，适配 PC 侧边栏与移动端底部导航 (BottomNav)。
 - ⚡ **SWR 0ms 秒开无感切换**：采用内存 + `sessionStorage` 双层 SWR 缓存机制，页面切换 0ms 瞬间呈现，彻底消除白屏与骨架屏闪烁。
-- 📚 **图书 ISBN 扫码与三层 API 自动识别**：
-  - 支持扫描/输入图书 ISBN 13/10 位条码，通过 **三层 API 瀑布流兜底（豆瓣开源 API 镜像 ➔ Google Books ➔ Open Library）** 自动检索书名、作者、出版社、定价及封面全量元数据，一键预填入库。
+- 📚 **图书 ISBN 扫码与双源自动识别**：
+  - 支持 Web 摄像头及 ISBN-13、ISBN-10 手输；服务端按 **Google Books ➔ Open Library** 查询并预填书名、作者、出版社、出版日期、简介和封面。非图书 EAN 条码会被拒绝，查询失败可手动补录。手机摄像头扫码需通过受信任的 HTTPS 地址访问。
 - 🚨 **临期与低库存告警提醒**：
   - 自动标识 🔴 **已过期**、🟡 **临期（30天内）** 及 🟠 **低库存（数量 ≤ 2）** 醒目标签。
 - 📊 **数据导出与资产报表 (.xlsx / 打印 PDF)**：
@@ -215,7 +215,6 @@ npm run dev
 sort-manager/
 ├── backend/            # Spring Boot 3.3.5 后端 API 源码与 Dockerfile
 ├── frontend/           # React 19 + Vite 7 前端 Web/PWA 源码与 Nginx 配置
-├── miniapp/            # 原生微信小程序源码
 ├── database/           # 数据库初始化 (init.sql) 与重置脚本 (reset_initial.sql)
 ├── ops/                # 自动化 AES 加密备份与验真恢复脚本链 (backup.ps1, restore-backup.ps1)
 ├── docs/               # 技术决策记录 (ADR)、架构设计规范与历史测试报告

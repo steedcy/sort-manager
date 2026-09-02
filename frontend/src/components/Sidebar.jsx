@@ -53,7 +53,7 @@ export default function Sidebar() {
             <LogOut size={17} aria-hidden="true" />退出登录
           </button>
         </div>
-        <span className="sidebar-version">v1.8.0</span>
+        <span className="sidebar-version">v1.9.0</span>
       </div>
     </aside>
   )

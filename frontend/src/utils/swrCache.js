@@ -50,7 +50,7 @@ export function invalidateSWRCache(pattern = '') {
   }
 }
 
-export function useSWR(key, fetcher, options = {}) {
+export function useSWR(key, fetcher) {
   const skey = serializeKey(key)
   const cachedData = getSWRCache(skey)
   
@@ -59,7 +59,10 @@ export function useSWR(key, fetcher, options = {}) {
   const [error, setError] = useState(null)
   
   const fetcherRef = useRef(fetcher)
-  fetcherRef.current = fetcher
+
+  useEffect(() => {
+    fetcherRef.current = fetcher
+  }, [fetcher])
 
   const revalidate = useCallback(async () => {
     if (!fetcherRef.current) return
@@ -79,14 +82,6 @@ export function useSWR(key, fetcher, options = {}) {
   }, [skey])
 
   useEffect(() => {
-    const currentCached = getSWRCache(skey)
-    if (currentCached !== undefined) {
-      setData(currentCached)
-      setLoading(false)
-    } else {
-      setLoading(true)
-    }
-
     let isMounted = true
     if (fetcherRef.current) {
       fetcherRef.current()

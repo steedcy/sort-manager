@@ -1,163 +1,61 @@
 package com.sort.manager.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sort.manager.dto.ItemDTO;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.sort.manager.book.BookLookupClient;
+import com.sort.manager.book.BookMetadata;
+import com.sort.manager.book.BookServiceUnavailableException;
+import com.sort.manager.book.IsbnUtils;
+import com.sort.manager.book.NormalizedIsbn;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class IsbnBookService {
+    private static final Duration SUCCESS_TTL = Duration.ofDays(30);
+    private static final Duration NOT_FOUND_TTL = Duration.ofHours(24);
+    private final BookLookupClient google;
+    private final BookLookupClient openLibrary;
+    private final Clock clock;
+    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
 
-    private final ObjectMapper objectMapper;
-
-    public ItemDTO lookupByIsbn(String rawIsbn) {
-        if (rawIsbn == null || rawIsbn.trim().isEmpty()) {
-            throw new IllegalArgumentException("ISBN 编码不能为空");
-        }
-        String isbn = rawIsbn.replaceAll("[^0-9X]", "").trim();
-        if (isbn.length() != 10 && isbn.length() != 13) {
-            throw new IllegalArgumentException("无效的 ISBN 格式，请输入 10 位或 13 位数字编码");
-        }
-
-        // Priority 1: Douban / Open Mirror API
-        ItemDTO dto = tryDoubanMirror(isbn);
-        if (dto != null) return dto;
-
-        // Priority 2: Google Books API
-        dto = tryGoogleBooks(isbn);
-        if (dto != null) return dto;
-
-        // Priority 3: Open Library API
-        dto = tryOpenLibrary(isbn);
-        if (dto != null) return dto;
-
-        throw new NoSuchElementException("未查询到 ISBN 为「" + rawIsbn + "」的图书信息，请检查编码或手动录入");
+    @Autowired
+    public IsbnBookService(@Qualifier("googleBooksClient") BookLookupClient google, @Qualifier("openLibraryClient") BookLookupClient openLibrary) {
+        this(google, openLibrary, Clock.systemUTC());
     }
 
-    private ItemDTO tryDoubanMirror(String isbn) {
-        try {
-            // Priority 1 mirror: API Isoyu / Open Douban Proxy
-            String urlStr = "https://api.isoyu.com/api/isbn?isbn=" + isbn;
-            String jsonStr = httpGet(urlStr, 3000);
-            if (jsonStr != null && !jsonStr.isEmpty()) {
-                JsonNode root = objectMapper.readTree(jsonStr);
-                if (root.has("data") && root.get("data").has("title")) {
-                    JsonNode data = root.get("data");
-                    ItemDTO dto = new ItemDTO();
-                    dto.setName(data.path("title").asText());
-                    String author = data.path("author").asText("");
-                    String publisher = data.path("publisher").asText("");
-                    dto.setDescription("作者：" + author + (publisher.isEmpty() ? "" : " · 出版社：" + publisher));
-                    String priceStr = data.path("price").asText("0").replaceAll("[^0-9.]", "");
-                    if (!priceStr.isEmpty()) {
-                        try { dto.setPrice(new BigDecimal(priceStr)); } catch (Exception ignored) {}
-                    }
-                    dto.setImageUrl(data.path("image").asText(data.path("cover").asText("")));
-                    dto.setCategoryName("图书");
-                    dto.setPurchaseDate(LocalDate.now().toString());
-                    dto.setQuantity(1);
-                    return dto;
+    IsbnBookService(BookLookupClient google, BookLookupClient openLibrary, Clock clock) { this.google = google; this.openLibrary = openLibrary; this.clock = clock; }
+
+    public BookLookupResult lookupByIsbn(String rawIsbn) {
+        NormalizedIsbn isbn = IsbnUtils.normalizeToIsbn13(rawIsbn);
+        Instant now = clock.instant();
+        CacheEntry cached = cache.get(isbn.isbn13());
+        if (cached != null && cached.expiresAt().isAfter(now)) {
+            if (cached.metadata() != null) return new BookLookupResult(cached.metadata(), true);
+            throw new NoSuchElementException("未查询到该图书，请手动补充信息");
+        }
+        boolean unavailable = false;
+        for (BookLookupClient client : new BookLookupClient[]{google, openLibrary}) {
+            try {
+                Optional<BookMetadata> result = client.lookup(isbn);
+                if (result.isPresent()) {
+                    BookMetadata metadata = result.get().withQueriedAt(now);
+                    cache.put(isbn.isbn13(), new CacheEntry(metadata, now.plus(SUCCESS_TTL)));
+                    return new BookLookupResult(metadata, false);
                 }
-            }
-        } catch (Exception e) {
-            log.debug("Douban mirror lookup failed for ISBN {}: {}", isbn, e.getMessage());
+            } catch (BookServiceUnavailableException ex) { unavailable = true; }
         }
-        return null;
+        cache.put(isbn.isbn13(), new CacheEntry(null, now.plus(NOT_FOUND_TTL)));
+        if (unavailable) throw new BookServiceUnavailableException();
+        throw new NoSuchElementException("未查询到该图书，请手动补充信息");
     }
 
-    private ItemDTO tryGoogleBooks(String isbn) {
-        try {
-            String urlStr = "https://www.googleapis.com/books/v1/volumes?q=isbn:" + isbn;
-            String jsonStr = httpGet(urlStr, 4000);
-            if (jsonStr != null && !jsonStr.isEmpty()) {
-                JsonNode root = objectMapper.readTree(jsonStr);
-                if (root.has("items") && root.get("items").isArray() && root.get("items").size() > 0) {
-                    JsonNode volumeInfo = root.get("items").get(0).path("volumeInfo");
-                    ItemDTO dto = new ItemDTO();
-                    dto.setName(volumeInfo.path("title").asText("未知书名"));
-                    List<String> authors = new ArrayList<>();
-                    if (volumeInfo.has("authors")) {
-                        for (JsonNode a : volumeInfo.get("authors")) authors.add(a.asText());
-                    }
-                    String publisher = volumeInfo.path("publisher").asText("");
-                    String desc = volumeInfo.path("description").asText("");
-                    dto.setDescription("作者：" + String.join(", ", authors) + (publisher.isEmpty() ? "" : " · 出版社：" + publisher) + (desc.isEmpty() ? "" : "\n" + desc));
-                    dto.setImageUrl(volumeInfo.path("imageLinks").path("thumbnail").asText("").replace("http://", "https://"));
-                    dto.setCategoryName("图书");
-                    dto.setPurchaseDate(LocalDate.now().toString());
-                    dto.setQuantity(1);
-                    dto.setPrice(BigDecimal.ZERO);
-                    return dto;
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Google Books lookup failed for ISBN {}: {}", isbn, e.getMessage());
-        }
-        return null;
-    }
-
-    private ItemDTO tryOpenLibrary(String isbn) {
-        try {
-            String key = "ISBN:" + isbn;
-            String urlStr = "https://openlibrary.org/api/books?bibkeys=" + key + "&format=json&jscmd=data";
-            String jsonStr = httpGet(urlStr, 4000);
-            if (jsonStr != null && !jsonStr.isEmpty()) {
-                JsonNode root = objectMapper.readTree(jsonStr);
-                if (root.has(key)) {
-                    JsonNode book = root.get(key);
-                    ItemDTO dto = new ItemDTO();
-                    dto.setName(book.path("title").asText("未知书名"));
-                    List<String> authors = new ArrayList<>();
-                    if (book.has("authors")) {
-                        for (JsonNode a : book.get("authors")) authors.add(a.path("name").asText());
-                    }
-                    List<String> publishers = new ArrayList<>();
-                    if (book.has("publishers")) {
-                        for (JsonNode p : book.get("publishers")) publishers.add(p.path("name").asText());
-                    }
-                    dto.setDescription("作者：" + String.join(", ", authors) + (publishers.isEmpty() ? "" : " · 出版社：" + String.join(", ", publishers)));
-                    dto.setImageUrl(book.path("cover").path("medium").asText(book.path("cover").path("large").asText("")));
-                    dto.setCategoryName("图书");
-                    dto.setPurchaseDate(LocalDate.now().toString());
-                    dto.setQuantity(1);
-                    dto.setPrice(BigDecimal.ZERO);
-                    return dto;
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Open Library lookup failed for ISBN {}: {}", isbn, e.getMessage());
-        }
-        return null;
-    }
-
-    private String httpGet(String urlStr, int timeoutMs) throws Exception {
-        URL url = URI.create(urlStr).toURL();
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setConnectTimeout(timeoutMs);
-        conn.setReadTimeout(timeoutMs);
-        conn.setRequestProperty("User-Agent", "Mozilla/5.0 SortManager/1.8.0");
-        int code = conn.getResponseCode();
-        if (code == 200) {
-            try (InputStream in = conn.getInputStream()) {
-                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-            }
-        }
-        return null;
-    }
+    private record CacheEntry(BookMetadata metadata, Instant expiresAt) {}
 }

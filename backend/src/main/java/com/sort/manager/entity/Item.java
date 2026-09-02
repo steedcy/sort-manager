@@ -50,6 +50,18 @@ public class Item {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Column(name = "isbn13", length = 13) private String isbn13;
+    @Column(name = "isbn10", length = 10) private String isbn10;
+    @Column(name = "book_authors", columnDefinition = "TEXT") private String bookAuthors;
+    @Column(name = "book_publisher", length = 255) private String bookPublisher;
+    @Column(name = "book_published_date", length = 50) private String bookPublishedDate;
+    @Column(name = "book_page_count") private Integer bookPageCount;
+    @Column(name = "book_language", length = 32) private String bookLanguage;
+    @Column(name = "book_categories", columnDefinition = "TEXT") private String bookCategories;
+    @Column(name = "book_subtitle", columnDefinition = "TEXT") private String bookSubtitle;
+    @Column(name = "book_source", length = 32) private String bookSource;
+    @Column(name = "book_source_id", length = 255) private String bookSourceId;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

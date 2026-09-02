@@ -27,7 +27,7 @@ if "%MISSING%"=="1" (
 if "%APP_JWT_SECRET%"=="" (
   echo.
   echo Missing APP_JWT_SECRET in .env.
-  echo Generate a random secret with at least 32 bytes before starting v1.8.
+  echo Generate a random secret with at least 32 bytes before starting v1.9.
   echo.
   pause
   exit /b 1
@@ -37,8 +37,10 @@ echo ===================================================
 echo           Sort Manager App - One-click Start
 echo ===================================================
 echo.
+set "JAVA_EXE=java"
+if exist "C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot\bin\java.exe" set "JAVA_EXE=C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot\bin\java.exe"
 echo Starting Backend Server (Spring Boot)...
-start "Sort Manager - Backend" /d "%~dp0backend" cmd /k "mvn package -DskipTests && java -jar target\manager.jar"
+start "Sort Manager - Backend" /d "%~dp0backend" cmd /k "mvn package -DskipTests && ""%JAVA_EXE%"" -Djdk.net.unixdomain.tmpdir=C:\tmp -jar target\manager.jar"
 
 echo Starting Frontend Server (Vite/React)...
 start "Sort Manager - Frontend" /d "%~dp0frontend" cmd /k npm run dev

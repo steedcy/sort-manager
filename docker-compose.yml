@@ -34,6 +34,7 @@ services:
       APP_BOOTSTRAP_HOUSEHOLD_NAME: ${APP_BOOTSTRAP_HOUSEHOLD_NAME:-我的家庭}
       FLYWAY_ENABLED: "true"
       APP_UPLOAD_PATH: /app/uploads
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY:-}
     volumes:
       - app_uploads:/app/uploads
     ports:

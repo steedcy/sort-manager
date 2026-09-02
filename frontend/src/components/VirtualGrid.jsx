@@ -4,11 +4,13 @@ export default function VirtualGrid({ items, renderItem, className = 'items-grid
   const containerRef = useRef(null)
   const [scrollTop, setScrollTop] = useState(0)
   const [viewportHeight, setViewportHeight] = useState(800)
+  const [containerOffsetTop, setContainerOffsetTop] = useState(200)
 
   useEffect(() => {
     const handleScroll = () => {
       setScrollTop(window.scrollY || document.documentElement.scrollTop || 0)
       setViewportHeight(window.innerHeight || 800)
+      setContainerOffsetTop(containerRef.current?.offsetTop ?? 200)
     }
 
     handleScroll()
@@ -31,7 +33,6 @@ export default function VirtualGrid({ items, renderItem, className = 'items-grid
   const totalRows = Math.ceil(items.length / columns)
   const totalHeight = totalRows * estimatedItemHeight
 
-  const containerOffsetTop = containerRef.current ? containerRef.current.offsetTop : 200
   const relativeScrollTop = Math.max(0, scrollTop - containerOffsetTop)
 
   const startRow = Math.max(0, Math.floor(relativeScrollTop / estimatedItemHeight) - 2)

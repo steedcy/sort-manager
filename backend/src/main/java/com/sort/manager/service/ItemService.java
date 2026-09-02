@@ -1,6 +1,7 @@
 package com.sort.manager.service;
 
 import com.sort.manager.dto.ItemDTO;
+import com.sort.manager.book.BookMetadata;
 import com.sort.manager.dto.PageResponse;
 import com.sort.manager.dto.RecycleBinItemDTO;
 import com.sort.manager.entity.Category;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -232,6 +234,7 @@ public class ItemService {
         }
 
         item.setImageUrl(dto.getImageUrl());
+        fillBookMetadata(item, dto.getBookMetadata());
         if (dto.getCategoryId() != null) {
             Category category = categoryRepository.findByIdAndHouseholdId(dto.getCategoryId(), item.getHouseholdId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found: " + dto.getCategoryId()));
@@ -247,6 +250,20 @@ public class ItemService {
             item.setLocation(null);
         }
     }
+
+    private void fillBookMetadata(Item item, BookMetadata metadata) {
+        if (metadata == null) return;
+        item.setIsbn13(metadata.isbn13()); item.setIsbn10(metadata.isbn10());
+        item.setBookAuthors(join(metadata.authors())); item.setBookPublisher(metadata.publisher()); item.setBookPublishedDate(metadata.publishedDate());
+        item.setBookPageCount(metadata.pageCount()); item.setBookLanguage(metadata.language()); item.setBookCategories(join(metadata.categories()));
+        item.setBookSubtitle(metadata.subtitle()); item.setBookSource(metadata.source()); item.setBookSourceId(metadata.sourceId());
+        if ((item.getName() == null || item.getName().isBlank()) && metadata.title() != null) item.setName(metadata.title());
+        if ((item.getDescription() == null || item.getDescription().isBlank()) && metadata.description() != null) item.setDescription(metadata.description());
+        if ((item.getImageUrl() == null || item.getImageUrl().isBlank()) && metadata.coverUrl() != null) item.setImageUrl(metadata.coverUrl());
+    }
+
+    private String join(List<String> values) { return values == null || values.isEmpty() ? null : String.join("\u001F", values); }
+    private List<String> split(String value) { return value == null || value.isBlank() ? List.of() : Arrays.asList(value.split("\u001F")); }
 
     private void validateItem(ItemDTO dto) {
         if (dto.getName() == null || dto.getName().trim().isEmpty()) {
@@ -321,6 +338,7 @@ public class ItemService {
         dto.setIsLowStock(item.getQuantity() != null && item.getQuantity() <= 2);
 
         dto.setImageUrl(item.getImageUrl());
+        if (item.getIsbn13() != null) dto.setBookMetadata(new BookMetadata(item.getIsbn10(), item.getIsbn13(), item.getName(), item.getBookSubtitle(), split(item.getBookAuthors()), item.getBookPublisher(), item.getBookPublishedDate(), item.getDescription(), item.getBookPageCount(), split(item.getBookCategories()), item.getBookLanguage(), item.getImageUrl(), item.getBookSource() == null ? "manual" : item.getBookSource(), item.getBookSourceId(), null));
         if (item.getCategory() != null) {
             dto.setCategoryId(item.getCategory().getId());
             dto.setCategoryName(item.getCategory().getName());

@@ -49,6 +49,8 @@ app:
   backup:
     status-path: ${APP_BACKUP_STATUS_PATH:}
     stale-after-hours: ${APP_BACKUP_STALE_AFTER_HOURS:48}
+  books:
+    google-api-key: ${GOOGLE_BOOKS_API_KEY:}
 
 logging:
   level:
