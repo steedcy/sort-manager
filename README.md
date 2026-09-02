@@ -181,14 +181,7 @@ docker exec -i sort-manager-db sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD
 - Node.js >= 20.19.0
 - MySQL 8.4
 
-### 1. 快速启动（Windows）
-项目根目录下准备了自动化一键启动脚本：
-
-```powershell
-.\start.bat
-```
-
-### 2. 手动启动
+### 启动服务
 **后端**：
 ```powershell
 cd backend
@@ -217,9 +210,9 @@ sort-manager/
 ├── frontend/           # React 19 + Vite 7 前端 Web/PWA 源码与 Nginx 配置
 ├── database/           # 数据库初始化 (init.sql) 与重置脚本 (reset_initial.sql)
 ├── ops/                # 自动化 AES 加密备份与验真恢复脚本链 (backup.ps1, restore-backup.ps1)
-├── docs/               # 技术决策记录 (ADR)、架构设计规范与历史测试报告
+├── docs/               # 技术决策记录 (ADR) 与版本发布说明
 ├── docker-compose.yml  # 通用 Docker Compose 容器编排文件
-└── start.bat           # Windows 本地启动脚本
+└── .env.example        # 环境变量模板
 ```
 
 ---

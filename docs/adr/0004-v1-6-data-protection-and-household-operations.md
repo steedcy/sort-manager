@@ -2,7 +2,7 @@
 
 **状态：** Accepted
 **日期：** 2026-07-21
-**规格：** `docs/superpowers/specs/2026-07-21-v1-6-data-protection-operations-design.md`
+**规格：** 原实施规格已在仓库清理中移除；本 ADR 保留为该决策的唯一维护记录。
 
 ## 背景
 
