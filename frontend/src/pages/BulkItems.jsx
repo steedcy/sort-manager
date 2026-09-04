@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArchiveRestore, ClipboardPaste, Download, FileUp, Plus, ScanSearch, Send, X } from 'lucide-react'
+import { ArchiveRestore, ClipboardPaste, Download, FileUp, Plus, ScanSearch, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { categoryApi, itemApi, locationApi } from '../api'
 import BulkItemRow from '../components/BulkItemRow'
 import { buildLocationTreeOptions } from '../utils/tree'
 import { buildBulkTemplate, parseBulkText } from '../utils/bulkParser'
 import { useAuth } from '../context/AuthContext'
+import BackButton from '../components/BackButton'
 
 const DRAFT_KEY = 'sort-manager:bulk-items-draft:v1'
 const MAX_FILE_BYTES = 1024 * 1024
@@ -210,7 +210,7 @@ export default function BulkItems() {
           <div className="page-title-line"><ArchiveRestore size={24} aria-hidden="true" /><h1 className="page-title">批量录入</h1></div>
           <p className="page-subtitle">把 Excel、WPS 或 CSV 清单放进入库托盘，预检通过后整批录入。</p>
         </div>
-        <Link className="btn btn-ghost" to="/items"><X size={17} aria-hidden="true" />返回物品</Link>
+        <BackButton fallbackTo="/items" label="返回物品" />
       </header>
 
       <section className="bulk-import-card bulk-import-panel card" aria-labelledby="bulk-import-title">

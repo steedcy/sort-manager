@@ -1,9 +1,8 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, CalendarOff, Clock, DollarSign, MapPin, Package, ShieldCheck, Tag, TrendingUp } from 'lucide-react'
+import { CalendarOff, Clock, DollarSign, MapPin, Package, Tag, TrendingUp } from 'lucide-react'
 import { dashboardApi } from '../api'
 import AuthImage from '../components/AuthImage'
-import { useAuth } from '../context/AuthContext'
 import { Card, PageHeader, Skeleton, StatusBadge } from '../components/ui'
 import { useSWR } from '../utils/swrCache'
 
@@ -29,7 +28,6 @@ function SummaryCard({ item, value, onOpen }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const fetcher = useCallback(() => dashboardApi.getStats(), [])
   const { data, loading } = useSWR('dashboard', fetcher)
 
@@ -59,14 +57,6 @@ export default function Dashboard() {
           return <SummaryCard key={item.key} item={item} value={value} onOpen={() => navigate(item.route)} />
         })}
       </section>
-
-      {user.role === 'OWNER' && (
-        <button className="dashboard-operations-entry" type="button" onClick={() => navigate('/operations')}>
-          <span className="dashboard-operations-icon" aria-hidden="true"><ShieldCheck size={21} /></span>
-          <span><strong>家庭数据保护</strong><small>查看备份状态、操作记录和回收站</small></span>
-          <ArrowRight size={19} aria-hidden="true" />
-        </button>
-      )}
 
       <div className="dashboard-grid">
         {data?.expiringItems?.length > 0 && (

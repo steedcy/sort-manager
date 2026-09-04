@@ -43,6 +43,7 @@ class AuthServiceTest {
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         assertThat(response.user().householdId()).isEqualTo(3L);
         assertThat(response.user().role()).isEqualTo("OWNER");
+        assertThat(response.user().enabled()).isTrue();
         verify(fixture.attempts).recordSuccess("owner", "127.0.0.1");
     }
 

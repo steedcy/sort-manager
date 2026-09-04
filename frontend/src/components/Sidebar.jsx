@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Activity, ArchiveRestore, Box, LayoutDashboard, LogOut, MapPin, Package, Tag, UserRound, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import LogoutConfirmDialog from './LogoutConfirmDialog'
 
 const primaryItems = [
   { label: '仪表盘', path: '/', icon: LayoutDashboard },
@@ -11,7 +13,8 @@ const primaryItems = [
 ]
 
 export default function Sidebar() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
+  const [logoutOpen, setLogoutOpen] = useState(false)
   const navItems = user.role === 'OWNER'
     ? [...primaryItems,
         { label: '家庭成员', path: '/members', icon: Users },
@@ -49,12 +52,13 @@ export default function Sidebar() {
           </div>
         </div>
         <div className="sidebar-account-actions">
-          <button className="sidebar-logout" type="button" onClick={logout}>
+          <button className="sidebar-logout" type="button" onClick={() => setLogoutOpen(true)}>
             <LogOut size={17} aria-hidden="true" />退出登录
           </button>
         </div>
-        <span className="sidebar-version">v1.9.0</span>
+        <span className="sidebar-version">v2.0.0</span>
       </div>
+      <LogoutConfirmDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </aside>
   )
 }

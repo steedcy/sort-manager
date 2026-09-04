@@ -1,4 +1,4 @@
-# 收纳管家 (Sort Manager) v1.9.0
+# 收纳管家 (Sort Manager) v2.0.0
 
 ![Sort Manager Logo](frontend/public/favicon.svg)
 
@@ -177,16 +177,25 @@ docker exec -i sort-manager-db sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD
 ## 💻 本地开发与启动
 
 ### 环境要求
-- JDK 17+ (推荐 JDK 17 / 21)
+- JDK 26.0.1
 - Node.js >= 20.19.0
 - MySQL 8.4
 
 ### 启动服务
 **后端**：
 ```powershell
-cd backend
-mvn package -DskipTests
-java -jar target/manager.jar
+pwsh -File .\ops\start-local.ps1
+```
+
+该脚本会读取本地 `.env`、构建并以前台方式启动后端。它为 JDK 的 Windows AF_UNIX
+内部套接字指定 `C:\Temp\sort-manager-java-uds`，避免部分 Windows 环境中默认用户
+`%TEMP%` 目录导致的 `Unable to establish loopback connection`。该设置仅作用于当前 Java
+进程；不会更改系统 TEMP、Windows 防火墙、Winsock 或目录 ACL。
+
+若已经完成构建，可跳过 Maven：
+
+```powershell
+pwsh -File .\ops\start-local.ps1 -SkipBuild
 ```
 
 **前端**：

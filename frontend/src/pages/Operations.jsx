@@ -3,6 +3,7 @@ import { Activity, ArchiveRestore, ChevronLeft, ChevronRight, DatabaseBackup, Re
 import toast from 'react-hot-toast'
 import { operationsApi } from '../api'
 import EmptyState from '../components/EmptyState'
+import BackButton from '../components/BackButton'
 import { ACTION_LABELS, actionLabel, actionTone, backupPresentation, formatOperationTime } from '../utils/operations'
 
 const emptyPage = { content: [], page: 0, totalPages: 0, totalElements: 0, first: true, last: true }
@@ -79,6 +80,7 @@ export default function Operations() {
     <div className="page-content operations-page">
       <header className="page-heading-row operations-heading">
         <div>
+          <BackButton fallbackTo="/profile" />
           <div className="page-title-line"><Activity size={24} aria-hidden="true" /><h1 className="page-title">家庭运营</h1></div>
           <p className="page-subtitle">查看家庭维护记录，管理误删物品与数据保护状态</p>
         </div>

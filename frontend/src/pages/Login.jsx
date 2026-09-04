@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff, Home, KeyRound, MapPin, Package, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, KeyRound } from 'lucide-react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import loginBackground from '../assets/login-home-storage-background.jpg'
 import { useAuth } from '../context/AuthContext'
 
 function loginErrorMessage(error) {
@@ -58,46 +59,13 @@ export default function Login() {
 
   return (
     <main className="login-page">
-      <section className="login-index" aria-labelledby="login-brand-title">
-        <div className="login-brand">
-          <span className="login-brand-mark" aria-hidden="true"><Home size={22} /></span>
-          <div>
-            <p className="login-eyebrow">家庭物品簿</p>
-            <h1 id="login-brand-title">每件物品，都有它的位置</h1>
-          </div>
-        </div>
-        <p className="login-intro">和家人一起记录、查找与整理日常物品，让家里的每个柜格都清楚可见。</p>
+      <img className="login-background" src={loginBackground} alt="" aria-hidden="true" />
+      <header className="login-system-brand">
+        <h1>家庭物品管理系统</h1>
+      </header>
 
-        <div className="cabinet-index" aria-label="家庭收纳位置示意">
-          <div className="cabinet-cell cabinet-cell-wide">
-            <MapPin size={20} aria-hidden="true" />
-            <span>客厅 · 电视柜</span>
-            <strong>12 件</strong>
-          </div>
-          <div className="cabinet-cell">
-            <Package size={20} aria-hidden="true" />
-            <span>厨房</span>
-            <strong>28 件</strong>
-          </div>
-          <div className="cabinet-cell cabinet-cell-accent">
-            <ShieldCheck size={20} aria-hidden="true" />
-            <span>家庭共享</span>
-            <strong>仅家人可见</strong>
-          </div>
-          <div className="cabinet-cell cabinet-cell-wide cabinet-cell-quiet">
-            <KeyRound size={20} aria-hidden="true" />
-            <span>安全访问</span>
-            <strong>会话受保护</strong>
-          </div>
-        </div>
-      </section>
-
-      <section className="login-panel" aria-labelledby="login-form-title">
+      <section className="login-panel" aria-label="账号登录">
         <div className="login-form-wrap">
-          <p className="login-eyebrow">欢迎回来</p>
-          <h2 id="login-form-title">登录家庭空间</h2>
-          <p className="login-helper">使用家庭管理员为你创建的账号。</p>
-
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className="input-group">
               <label className="input-label" htmlFor="login-username">用户名</label>
@@ -151,6 +119,8 @@ export default function Login() {
           </form>
         </div>
       </section>
+
+      <footer className="login-version">v2.0.0</footer>
     </main>
   )
 }

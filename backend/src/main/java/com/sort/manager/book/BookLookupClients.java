@@ -51,7 +51,7 @@ public class BookLookupClients {
         try {
             HttpURLConnection connection = (HttpURLConnection) URI.create(url).toURL().openConnection();
             connection.setRequestMethod("GET"); connection.setConnectTimeout(6000); connection.setReadTimeout(6000);
-            connection.setRequestProperty("User-Agent", "SortManager/1.9.0 (+https://github.com/steedcy/sort-manager)");
+            connection.setRequestProperty("User-Agent", "SortManager/2.0.0 (+https://github.com/steedcy/sort-manager)");
             if (connection.getResponseCode() != 200) return null;
             try (InputStream input = connection.getInputStream()) { return new String(input.readAllBytes(), StandardCharsets.UTF_8); }
         } catch (Exception ex) { throw new BookServiceUnavailableException(ex); }

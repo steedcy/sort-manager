@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { X, Loader2 } from 'lucide-react'
 
-export default function Modal({ title, onClose, onSubmit, loading, children, wide }) {
+export default function Modal({ title, onClose, onSubmit, loading, children, wide, submitLabel = '保存', submitTone = 'primary' }) {
   const closeRef = useRef(null)
   const closeFromKeyboard = useEffectEvent(() => {
     if (!loading) onClose()
@@ -32,9 +32,9 @@ export default function Modal({ title, onClose, onSubmit, loading, children, wid
         <div className="modal-body">{children}</div>
         <div className="modal-footer">
           <button className="btn btn-ghost" type="button" onClick={onClose} disabled={loading}>取消</button>
-          <button className="btn btn-primary" type="button" onClick={onSubmit} disabled={loading}>
+          <button className={`btn btn-${submitTone}`} type="button" onClick={onSubmit} disabled={loading}>
             {loading && <Loader2 className="button-spinner" size={16} aria-hidden="true" />}
-            {loading ? '保存中...' : '保存'}
+            {loading ? '处理中…' : submitLabel}
           </button>
         </div>
       </div>

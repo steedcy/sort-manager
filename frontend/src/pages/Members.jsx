@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { memberApi } from '../api'
 import { useAuth } from '../context/AuthContext'
 import EmptyState from '../components/EmptyState'
+import BackButton from '../components/BackButton'
 
 const initialForm = { username: '', displayName: '', password: '', role: 'MEMBER' }
 const roleLabel = (role) => role === 'OWNER' ? '管理员' : '家庭成员'
@@ -123,6 +124,7 @@ export default function Members() {
     <div className="page-content members-page">
       <header className="page-heading-row">
         <div>
+          <BackButton fallbackTo="/profile" />
           <div className="page-title-line">
             <ShieldCheck size={24} aria-hidden="true" />
             <h1 className="page-title">家庭成员</h1>

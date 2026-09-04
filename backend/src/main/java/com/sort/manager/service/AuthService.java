@@ -103,7 +103,8 @@ public class AuthService {
                 member.getUser().getDisplayName(),
                 member.getHousehold().getId(),
                 member.getHousehold().getName(),
-                member.getRole().name());
+                member.getRole().name(),
+                member.getUser().isEnabled());
     }
 
     private String normalizeUsername(String username) {

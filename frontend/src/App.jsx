@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import Members from './pages/Members'
 import BulkItems from './pages/BulkItems'
 import Operations from './pages/Operations'
+import Profile from './pages/Profile'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
                 <Route path="items/bulk" element={<BulkItems />} />
                 <Route path="locations" element={<Locations />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="profile" element={<Profile />} />
                 <Route element={<ProtectedRoute role="OWNER" />}>
                   <Route path="members" element={<Members />} />
                   <Route path="operations" element={<Operations />} />

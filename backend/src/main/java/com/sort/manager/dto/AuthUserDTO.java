@@ -6,5 +6,6 @@ public record AuthUserDTO(
         String displayName,
         Long householdId,
         String householdName,
-        String role) {
+        String role,
+        boolean enabled) {
 }

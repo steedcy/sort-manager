@@ -1,6 +1,6 @@
 # Sort Manager Frontend
 
-React 19 + Vite 7 frontend for Sort Manager. Current version: v1.9.0.
+React 19 + Vite 7 frontend for Sort Manager. Current version: v2.0.0.
 
 ```powershell
 npm ci
